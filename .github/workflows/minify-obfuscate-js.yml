@@ -11,12 +11,12 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Set up Node.js
-      uses: actions/setup-node@v2
+      uses: actions/setup-node@v3
       with:
-        node-version: '14'
+        node-version: '20'
 
     - name: Install dependencies
       run: npm install terser javascript-obfuscator -g
@@ -35,8 +35,9 @@ jobs:
         git config --global user.email "yohan@klymb.co"
         git config --global user.name "YohanKlymb"
         git clone $PUBLIC_REPO public-repo
+        mkdir -p public-repo/js  # Create the js directory if it doesn't exist
         cp js/main.min.js public-repo/js/
         cd public-repo
         git add js/main.min.js
         git commit -m "Update minified and obfuscated JavaScript file"
-        git push $PUBLIC_REPO main
+        git push origin main
