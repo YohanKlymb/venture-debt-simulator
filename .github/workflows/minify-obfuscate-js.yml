@@ -1,0 +1,42 @@
+name: Minify and Obfuscate JavaScript
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '14'
+
+    - name: Install dependencies
+      run: npm install terser javascript-obfuscator -g
+
+    - name: Minify JavaScript
+      run: terser js/main.js -o js/main.minified.js
+
+    - name: Obfuscate JavaScript
+      run: javascript-obfuscator js/main.minified.js --output js/main.min.js --compact true --control-flow-flattening true --dead-code-injection false --self-defending true --string-array true --string-array-encoding base64 --string-array-index-shift true
+
+    - name: Push minified and obfuscated JS to public repo
+      env:
+        PUBLIC_REPO: https://github.com/YohanKlymb/venture-debt-simulator-public.git
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        git config --global user.email "yohan@klymb.co"
+        git config --global user.name "YohanKlymb"
+        git clone $PUBLIC_REPO public-repo
+        cp js/main.min.js public-repo/js/
+        cd public-repo
+        git add js/main.min.js
+        git commit -m "Update minified and obfuscated JavaScript file"
+        git push $PUBLIC_REPO main
