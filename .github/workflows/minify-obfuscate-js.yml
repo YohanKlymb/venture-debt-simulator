@@ -40,6 +40,7 @@ jobs:
         cd public-repo
         git init
         git remote add origin https://github.com/YohanKlymb/venture-debt-simulator-public.git
+        mkdir -p js
         cp ../js/main.min.js ./js/
         git add js/main.min.js
         git commit -m "Update minified and obfuscated JavaScript file"
