@@ -39,7 +39,7 @@ jobs:
         mkdir public-repo
         cd public-repo
         git init
-        git remote add origin https://YohanKlymb:${{ secrets.GITHUB_TOKEN }}@github.com/YohanKlymb/venture-debt-simulator-public.git
+        git remote add origin https://${{ secrets.GITHUB_TOKEN }}@github.com/YohanKlymb/venture-debt-simulator-public.git
         mkdir -p js  # Ensure js directory is created
         cp ../js/main.min.js js/
         git add js/main.min.js
