@@ -669,8 +669,9 @@ document.addEventListener("DOMContentLoaded", function() {
         // Layout for the bar chart
         const layout = {
             barmode: 'stack',
-            title: 'Cost of financing options',
+            title: 'Debt vs Equity financing cost',
             showlegend: false,  // Hide legend
+            autosize: true, // Responsive
             xaxis: {
                 showgrid: false,  // Hide x-axis grid lines
                 zeroline: false,  // Hide x-axis zero line
@@ -766,6 +767,7 @@ document.addEventListener("DOMContentLoaded", function() {
         const layout = {
             title: 'Retained Values Over Time',
             showlegend: false,  // Hide legend
+            autosize: true, // Responsive
             xaxis: {
                 showgrid: false,  // Hide x-axis grid lines
                 zeroline: false,  // Hide x-axis zero line
@@ -824,7 +826,8 @@ document.addEventListener("DOMContentLoaded", function() {
         ];
     
         const layout = {
-            title: 'Yearly Repayments Breakdown',
+            autosize: true, // Responsive
+            title: 'Yearly loan amortization forecast',
             barmode: 'stack',
             xaxis: { title: 'Years' },
             yaxis: { title: 'Amount (€)' },
@@ -849,8 +852,8 @@ document.addEventListener("DOMContentLoaded", function() {
         
         const categories = [
             `Interest-only${styler(`${debtTermSheet.interestOnlyPeriod} months`)}`, 
-            `Total amortization${styler(`${debtTermSheet.straightAmortization} months`)}`, 
-            `Global interest rate${styler(`${(debtTermSheet.interestRate * 100).toFixed(2)}%`)}`, 
+            `Loan amortization${styler(`${debtTermSheet.straightAmortization} months`)}`, 
+            `Interest rate${styler(`${(debtTermSheet.interestRate * 100).toFixed(2)}%`)}`, 
             `Arrangement fee${styler(`${(debtTermSheet.arrangementFees * 100).toFixed(2)}%`)}`, 
             `Exit fee${styler(`${(debtTermSheet.exitFees * 100).toFixed(2)}%`)}`, 
             `Warrant coverage${styler(`${(debtTermSheet.warrantCoverage * 100).toFixed(2)}%`)}`, 
@@ -887,6 +890,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }];
 
         const layout = {
+            autosize: true, // Responsive
             polar: {
                 radialaxis: {
                     showgrid: true,
