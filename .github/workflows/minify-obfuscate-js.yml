@@ -48,5 +48,6 @@ jobs:
         git add js/main.min.js
         git commit -m "Update minified and obfuscated JavaScript file"
         git branch -M main
+        git branch --set-upstream-to=origin/main main
         git pull
         git push -u origin main
