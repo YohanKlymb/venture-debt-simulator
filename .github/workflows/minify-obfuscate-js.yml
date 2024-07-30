@@ -43,11 +43,10 @@ jobs:
         cd public-repo
         git init
         git remote add origin https://YohanKlymb:${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/YohanKlymb/venture-debt-simulator-public.git
+        git pull origin main --allow-unrelated-histories # Pull the remote main branch to avoid conflicts
         mkdir -p js  # Ensure js directory is created
         cp ../js/main.min.js js/
         git add js/main.min.js
         git commit -m "Update minified and obfuscated JavaScript file"
         git branch -M main
-        git branch --set-upstream-to=origin/main main
-        git pull
         git push -u origin main
