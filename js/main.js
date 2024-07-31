@@ -675,8 +675,8 @@ document.addEventListener("DOMContentLoaded", function() {
             barmode: 'stack',
             title: 'Debt vs Equity financing cost',
             showlegend: false,  // Hide legend
-            width: 400,
-            height: 240,
+            // width: 400,
+            // height: 240,
             xaxis: {
                 showgrid: false,  // Hide x-axis grid lines
                 zeroline: false,  // Hide x-axis zero line
@@ -772,8 +772,8 @@ document.addEventListener("DOMContentLoaded", function() {
         const layout = {
             title: 'Retained Values Over Time',
             showlegend: false,  // Hide legend
-            width: 400,
-            height: 240,
+            // width: 400,
+            // height: 240,
             xaxis: {
                 showgrid: false,  // Hide x-axis grid lines
                 zeroline: false,  // Hide x-axis zero line
@@ -832,8 +832,8 @@ document.addEventListener("DOMContentLoaded", function() {
         ];
     
         const layout = {
-            width: 400,
-            height: 240,
+            // width: 400,
+            // height: 240,
             title: 'Yearly loan amortization forecast',
             barmode: 'stack',
             xaxis: { title: 'Years' },
@@ -897,8 +897,8 @@ document.addEventListener("DOMContentLoaded", function() {
         }];
 
         const layout = {
-            width: 400,
-            height: 240,
+            // width: 400,
+            // height: 240,
             polar: {
                 radialaxis: {
                     showgrid: true,
