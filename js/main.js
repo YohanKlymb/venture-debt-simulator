@@ -589,7 +589,7 @@ document.addEventListener("DOMContentLoaded", function() {
         
         // Calculate the final difference between retainedValuesDebt and retainedValuesEquity
         const equityCost = retainedValuesDebt[retainedValuesDebt.length - 1] - retainedValuesEquity[retainedValuesEquity.length - 1];
-        const fontSize = 14;
+        const fontSize = 12;
 
         // Create data series
         let debtPaidSerie = {
@@ -671,7 +671,8 @@ document.addEventListener("DOMContentLoaded", function() {
             barmode: 'stack',
             title: 'Debt vs Equity financing cost',
             showlegend: false,  // Hide legend
-            autosize: true, // Responsive
+            width: 400,
+            height: 240,
             xaxis: {
                 showgrid: false,  // Hide x-axis grid lines
                 zeroline: false,  // Hide x-axis zero line
@@ -767,7 +768,8 @@ document.addEventListener("DOMContentLoaded", function() {
         const layout = {
             title: 'Retained Values Over Time',
             showlegend: false,  // Hide legend
-            autosize: true, // Responsive
+            width: 400,
+            height: 240,
             xaxis: {
                 showgrid: false,  // Hide x-axis grid lines
                 zeroline: false,  // Hide x-axis zero line
@@ -826,7 +828,8 @@ document.addEventListener("DOMContentLoaded", function() {
         ];
     
         const layout = {
-            autosize: true, // Responsive
+            width: 400,
+            height: 240,
             title: 'Yearly loan amortization forecast',
             barmode: 'stack',
             xaxis: { title: 'Years' },
@@ -890,7 +893,8 @@ document.addEventListener("DOMContentLoaded", function() {
         }];
 
         const layout = {
-            autosize: true, // Responsive
+            width: 400,
+            height: 240,
             polar: {
                 radialaxis: {
                     showgrid: true,
