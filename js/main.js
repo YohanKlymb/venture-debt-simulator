@@ -573,6 +573,8 @@ document.addEventListener("DOMContentLoaded", function() {
             // Initial rendering using Plotly.newPlot
             Plotly.newPlot(chartId, data, layout, config);
         } else {
+            Plotly.newPlot(chartId, data, layout, config);
+            return
             // Updating the chart with animations using Plotly.animate
             Plotly.animate(chartId, {
                 data: data,
