@@ -564,10 +564,10 @@ document.addEventListener("DOMContentLoaded", function() {
     function renderOrUpdatePlot(chartId, data, layout, onlyRender=false) {
         const chartElement = document.getElementById(chartId);
 
-        var config = {
-            displayModeBar: false,  // Hide the modebar
-            responsive: true
-          };
+        // var config = {
+        //     displayModeBar: false,  // Hide the modebar
+        //     // responsive: true
+        //   };
 
         // Check if the chart has been rendered before by checking for existing data
         if (!chartElement.data || chartElement.data.length === 0 || onlyRender) {
@@ -777,9 +777,10 @@ document.addEventListener("DOMContentLoaded", function() {
             showlegend: false,  // Hide legend
             // width: 400,
             // height: 240,
-            autosize: true,
-            margin: { t: 30, r: 30, b: 30, l: 30 },
+            // autosize: true,
+            // margin: { t: 30, r: 30, b: 30, l: 30 },
             xaxis: {
+                fixedrange: true,
                 showgrid: false,  // Hide x-axis grid lines
                 zeroline: false,  // Hide x-axis zero line
                 showline: true,  // Show x-axis line
@@ -841,7 +842,7 @@ document.addEventListener("DOMContentLoaded", function() {
             // height: 240,
             title: 'Yearly loan amortization forecast',
             barmode: 'stack',
-            xaxis: { title: 'Years' },
+            xaxis: { fixedrange: true, title: 'Years' },
             yaxis: { title: 'Amount (€)' },
             legend: {
                 orientation: 'h',
@@ -904,8 +905,8 @@ document.addEventListener("DOMContentLoaded", function() {
         const layout = {
             // width: 400,
             // height: 240,
-            autosize: true,
-            margin: { t: 30, r: 30, b: 30, l: 30 },
+            // autosize: true,
+            // margin: { t: 30, r: 30, b: 30, l: 30 },
             polar: {
                 radialaxis: {
                     showgrid: true,
