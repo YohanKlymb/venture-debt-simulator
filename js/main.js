@@ -572,9 +572,9 @@ document.addEventListener("DOMContentLoaded", function() {
         // Check if the chart has been rendered before by checking for existing data
         if (!chartElement.data || chartElement.data.length === 0 || onlyRender) {
             // Initial rendering using Plotly.newPlot
-            Plotly.newPlot(chartId, data, layout, config);
+            Plotly.newPlot(chartId, data, layout);//, config);
         } else {
-            Plotly.newPlot(chartId, data, layout, config);
+            Plotly.newPlot(chartId, data, layout);//, config);
             return
             // Updating the chart with animations using Plotly.animate
             Plotly.animate(chartId, {
