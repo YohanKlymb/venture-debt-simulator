@@ -565,7 +565,8 @@ document.addEventListener("DOMContentLoaded", function() {
         const chartElement = document.getElementById(chartId);
 
         var config = {
-            displayModeBar: false  // Hide the modebar
+            displayModeBar: false,  // Hide the modebar
+            responsive: true
           };
 
         // Check if the chart has been rendered before by checking for existing data
@@ -776,6 +777,8 @@ document.addEventListener("DOMContentLoaded", function() {
             showlegend: false,  // Hide legend
             // width: 400,
             // height: 240,
+            autosize: true,
+            margin: { t: 30, r: 30, b: 30, l: 30 },
             xaxis: {
                 showgrid: false,  // Hide x-axis grid lines
                 zeroline: false,  // Hide x-axis zero line
@@ -901,6 +904,8 @@ document.addEventListener("DOMContentLoaded", function() {
         const layout = {
             // width: 400,
             // height: 240,
+            autosize: true,
+            margin: { t: 30, r: 30, b: 30, l: 30 },
             polar: {
                 radialaxis: {
                     showgrid: true,
