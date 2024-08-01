@@ -558,6 +558,7 @@ document.addEventListener("DOMContentLoaded", function() {
     ////////////////////
 
     function adjustClipPaths() {
+        console.log("Adjust clip path");
         const plotlyContainers = document.querySelectorAll('.plotly-container');
 
         plotlyContainers.forEach(container => {
