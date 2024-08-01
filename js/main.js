@@ -559,8 +559,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
     function adjustClipPaths() {
         
-        const plotlyContainers = document.querySelectorAll('.plotly-container');
-        console.log("Adjust clip path : ", plotlyContainers);
+        const plotlyContainers = document.querySelectorAll('.plot-container');
+        
         plotlyContainers.forEach(container => {
             const svg = container.querySelector('.main-svg');
             const svgWidth = svg.clientWidth;
