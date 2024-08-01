@@ -580,10 +580,15 @@ document.addEventListener("DOMContentLoaded", function() {
     function renderOrUpdatePlot(chartId, data, layout, onlyRender=false) {
         const chartElement = document.getElementById(chartId);
 
+        // Create config
         var config = {
             displayModeBar: false,  // Hide the modebar
             responsive: true
           };
+
+        // Adjust layout
+        layout.margin = {l: 30, r: 30, b: 30, t: 30, pad: 4};
+        layout.autosize = true;
 
         // Check if the chart has been rendered before by checking for existing data
         if (!chartElement.data || chartElement.data.length === 0 || onlyRender) {
