@@ -560,6 +560,22 @@ document.addEventListener("DOMContentLoaded", function() {
     // Charts generation
     ////////////////////
 
+    function adjustClipPaths() {
+        const plotlyContainers = document.querySelectorAll('.plotly-container');
+
+        plotlyContainers.forEach(container => {
+            const svg = container.querySelector('.main-svg');
+            const svgWidth = svg.clientWidth;
+            const svgHeight = svg.clientHeight;
+
+            const clipPaths = container.querySelectorAll('clipPath rect');
+            clipPaths.forEach(rect => {
+                rect.setAttribute('width', svgWidth);
+                rect.setAttribute('height', svgHeight);
+            });
+        });
+    }
+
     // Generic method to render or update a Plotly chart with animations
     function renderOrUpdatePlot(chartId, data, layout, onlyRender=false) {
         const chartElement = document.getElementById(chartId);
@@ -572,9 +588,9 @@ document.addEventListener("DOMContentLoaded", function() {
         // Check if the chart has been rendered before by checking for existing data
         if (!chartElement.data || chartElement.data.length === 0 || onlyRender) {
             // Initial rendering using Plotly.newPlot
-            Plotly.newPlot(chartId, data, layout, config);
+            Plotly.newPlot(chartId, data, layout, config).then(adjustClipPaths);
         } else {
-            Plotly.newPlot(chartId, data, layout, config);
+            Plotly.newPlot(chartId, data, layout, config).then(adjustClipPaths);
             return
             // Updating the chart with animations using Plotly.animate
             Plotly.animate(chartId, {
@@ -1031,6 +1047,22 @@ document.addEventListener("DOMContentLoaded", function() {
 
     inputs.forEach(input => {
         input.addEventListener('blur', updateResults);
+    });
+
+    // Adjust clip paths on window resize
+    window.addEventListener('resize', function() {
+        adjustClipPaths();
+        Plotly.Plots.resize('debt_radar_chart');
+        Plotly.Plots.resize('payment_schedule_chart');
+        Plotly.Plots.resize('retained_valuation_gap_chart');
+        Plotly.Plots.resize('cost_comparison_chart');
+    });
+
+    // Observe DOM changes for each container
+    const plotlyContainers = document.querySelectorAll('.plotly-container');
+    plotlyContainers.forEach(container => {
+        const observer = new MutationObserver(adjustClipPaths);
+        observer.observe(container, { attributes: true, childList: true, subtree: true });
     });
 
     // Initial capture on page load
