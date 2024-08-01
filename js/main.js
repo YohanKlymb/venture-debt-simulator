@@ -194,7 +194,6 @@ document.addEventListener("DOMContentLoaded", function() {
     function calculateDebtParam(score, min, max, step = null, reverseScale = false, isPercentage = false, isInteger = false) {
         let result;
         if (reverseScale) {
-            console.log(min, max, score)
             result = min + (1 - score) * (max - min);
         } else {
             result = min + score * (max - min);
@@ -235,7 +234,6 @@ document.addEventListener("DOMContentLoaded", function() {
             arrangementFees: calculateDebtParam(scoreBoost, 0.01, 0.03, 0.005, reverseScale=true, isPercentage=true, isInteger=false),
             exitFees: calculateDebtParam(scoreBoost, 0, 0.03, 0.005, reverseScale=true, isPercentage=true, isInteger=false),
         };
-        console.log(debtTermSheet)
 
         if (current_runway < minRunway) {
             debtTermSheet.isRunwayEnough = false;
@@ -369,7 +367,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
         // Calculate fixed monthly payment for the amortization period
         const monthlyPayment = (debtAmount * monthlyInterestRate) / (1 - Math.pow(1 + monthlyInterestRate, -straightAmortization));
-        console.log('Monthly payment: ', monthlyPayment)
     
         // Calculate monthly principal payment for the amortization period
         const monthlyPrincipalPayment = debtAmount / straightAmortization;
@@ -567,6 +564,8 @@ document.addEventListener("DOMContentLoaded", function() {
             const svg = container.querySelector('.main-svg');
             const svgWidth = svg.clientWidth;
             const svgHeight = svg.clientHeight;
+
+            console.log("SVG height :", svgHeight, "SVG Width : ", svgWidth)
 
             const clipPaths = container.querySelectorAll('clipPath rect');
             clipPaths.forEach(rect => {
