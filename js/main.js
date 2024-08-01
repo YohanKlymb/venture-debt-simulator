@@ -587,7 +587,7 @@ document.addEventListener("DOMContentLoaded", function() {
           };
 
         // Adjust layout
-        layout.margin = {l: -10, r: 20, b: -10, t: 0, pad: 4};
+        layout.margin = {l: 0, r: 30, b: 0, t: 0, pad: 4};
         layout.autosize = true;
 
         // Check if the chart has been rendered before by checking for existing data
