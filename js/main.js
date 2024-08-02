@@ -590,7 +590,12 @@ document.addEventListener("DOMContentLoaded", function() {
         // layout.margin = {l: 20, r: 10, b: 10, t: 20, pad: 2};
         layout.autosize = false;
         const dim = document.querySelector('.chart-div').getBoundingClientRect()
-        layout.width = dim.width * 0.9;
+        const ratio = {width: 16, height: 9}
+        const width = dim.width * 0.9
+        const height = width / ratio.width * ratio.height
+        layout.width = width;
+        layout.height = height;
+        console.log("Dimensions : ", width, height)
         // layout.height = 400//dim.height * 0.9;
 
         // Check if the chart has been rendered before by checking for existing data
