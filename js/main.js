@@ -589,6 +589,8 @@ document.addEventListener("DOMContentLoaded", function() {
         // Adjust layout
         // layout.margin = {l: 20, r: 10, b: 10, t: 20, pad: 2};
         layout.autosize = false;
+        layout.width = 500;
+        layout.height = 300;
 
         // Check if the chart has been rendered before by checking for existing data
         if (!chartElement.data || chartElement.data.length === 0 || onlyRender) {
