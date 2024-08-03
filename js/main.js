@@ -563,8 +563,8 @@ document.addEventListener("DOMContentLoaded", function() {
         
         plotlyContainers.forEach(container => {
             const svg = container.querySelector('.main-svg');
-            const svgWidth = svg.clientWidth;
-            const svgHeight = svg.clientHeight;
+            const svgWidth = svg.clientWidth * 1.1;
+            const svgHeight = svg.clientHeight * 1.1;
 
             console.log("SVG height :", svgHeight, "SVG Width : ", svgWidth)
 
