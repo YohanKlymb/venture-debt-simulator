@@ -583,7 +583,7 @@ document.addEventListener("DOMContentLoaded", function() {
         // Create config
         var config = {
             displayModeBar: false,  // Hide the modebarx
-            responsive: false
+            responsive: true
           };
 
         // Adjust layout
