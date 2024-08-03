@@ -563,8 +563,8 @@ document.addEventListener("DOMContentLoaded", function() {
         
         plotlyContainers.forEach(container => {
             const svg = container.querySelector('.main-svg');
-            const svgWidth = svg.clientWidth * 0.9;
-            const svgHeight = svg.clientHeight * 0.9;
+            const svgWidth = svg.clientWidth;
+            const svgHeight = svg.clientHeight;
 
             console.log("SVG height :", svgHeight, "SVG Width : ", svgWidth)
 
@@ -582,21 +582,21 @@ document.addEventListener("DOMContentLoaded", function() {
 
         // Create config
         var config = {
-            displayModeBar: false,  // Hide the modebar
+            displayModeBar: false,  // Hide the modebarx
             responsive: false
           };
 
         // Adjust layout
         // layout.margin = {l: 20, r: 10, b: 10, t: 20, pad: 2};
-        layout.autosize = false;
-        const dim = document.querySelector('.chart-div').getBoundingClientRect()
-        const ratio = {width: 16, height: 9}
-        const width = dim.width
-        const height = width / ratio.width * ratio.height
-        layout.width = width;
-        layout.height = dim.height * 0.9;
-        console.log("Dimensions : ", width, height)
-        // layout.height = 400//dim.height * 0.9;
+        // layout.autosize = false;
+        // const dim = document.querySelector('.chart-div').getBoundingClientRect()
+        // const ratio = {width: 16, height: 9}
+        // const width = dim.width
+        // const height = width / ratio.width * ratio.height
+        // layout.width = width;
+        // layout.height = dim.height * 0.9;
+        // console.log("Dimensions : ", width, height)
+        // // layout.height = 400//dim.height * 0.9;
 
         // Check if the chart has been rendered before by checking for existing data
         if (!chartElement.data || chartElement.data.length === 0 || onlyRender) {
@@ -1063,20 +1063,20 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 
     // Adjust clip paths on window resize
-    window.addEventListener('resize', function() {
-        adjustClipPaths();
-        Plotly.Plots.resize('debt_radar_chart');
-        Plotly.Plots.resize('payment_schedule_chart');
-        Plotly.Plots.resize('retained_valuation_gap_chart');
-        Plotly.Plots.resize('cost_comparison_chart');
-    });
+    // window.addEventListener('resize', function() {
+    //     adjustClipPaths();
+    //     Plotly.Plots.resize('debt_radar_chart');
+    //     Plotly.Plots.resize('payment_schedule_chart');
+    //     Plotly.Plots.resize('retained_valuation_gap_chart');
+    //     Plotly.Plots.resize('cost_comparison_chart');
+    // });
 
     // Observe DOM changes for each container
-    const plotlyContainers = document.querySelectorAll('.plotly-container');
-    plotlyContainers.forEach(container => {
-        const observer = new MutationObserver(adjustClipPaths);
-        observer.observe(container, { attributes: true, childList: true, subtree: true });
-    });
+    // const plotlyContainers = document.querySelectorAll('.plotly-container');
+    // plotlyContainers.forEach(container => {
+    //     const observer = new MutationObserver(adjustClipPaths);
+    //     observer.observe(container, { attributes: true, childList: true, subtree: true });
+    // });
 
     // Initial capture on page load
     updateResults();
