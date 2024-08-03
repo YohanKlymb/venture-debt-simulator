@@ -757,8 +757,8 @@ document.addEventListener("DOMContentLoaded", function() {
                 color: '#607d8b',
                 width: 3
             },
-            text: emptyList.slice(0, solidLineEndIndex).concat(['Initial runway']),
-            textposition: emptyPosition.slice(0, solidLineEndIndex).concat(['left']),
+            // text: emptyList.slice(0, solidLineEndIndex).concat(['Initial runway']),
+            // textposition: emptyPosition.slice(0, solidLineEndIndex).concat(['left']),
             hovertemplate: '%{y:.3s}<extra></extra>'
         };
 
@@ -792,10 +792,34 @@ document.addEventListener("DOMContentLoaded", function() {
                 width: 3,
                 dash: 'dot'
             },
-            text: emptyList.slice(dottedLineStartIndex - 1).concat(['Increased runway']),
-            textposition: emptyPosition.slice(dottedLineStartIndex - 1).concat(['left']),
+            // text: emptyList.slice(dottedLineStartIndex - 1).concat(['Increased runway']),
+            // textposition: emptyPosition.slice(dottedLineStartIndex - 1).concat(['left']),
             hovertemplate: '%{y:.3s}<extra></extra>'
         };
+
+        // Annotations for text elements
+        const annotations = [
+            {
+                x: solidLineEndIndex + 1,
+                y: valueDifference[solidLineEndIndex],
+                text: 'Initial runway',
+                xanchor: 'left',
+                yanchor: 'top',
+                showarrow: false,
+                xshift: -100,
+                yshift: 20
+            },
+            {
+                x: nbMonths,
+                y: valueDifference[nbMonths - 1],
+                text: 'Increased runway',
+                xanchor: 'left',
+                yanchor: 'top',
+                showarrow: false,
+                xshift: -130,
+                yshift: 10
+            }
+        ];
     
         // Data for the line chart
         const data = [solidLineData, constantLineData, dottedLineData];
@@ -825,7 +849,8 @@ document.addEventListener("DOMContentLoaded", function() {
             },
             hovermode: 'closest',
             plot_bgcolor: 'rgba(0,0,0,0)',  // Transparent plot background
-            paper_bgcolor: 'rgba(0,0,0,0)'  // Transparent paper background
+            paper_bgcolor: 'rgba(0,0,0,0)',  // Transparent paper background
+            annotations: annotations
         };
     
         // Plot the chart
@@ -871,7 +896,7 @@ document.addEventListener("DOMContentLoaded", function() {
             // height: 240,
             title: 'Yearly loan amortization forecast',
             barmode: 'stack',
-            xaxis: { fixedrange: true, title: 'Years' },
+            xaxis: { fixedrange: true },
             yaxis: { title: 'Amount (€)' },
             legend: {
                 orientation: 'h',
