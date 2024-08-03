@@ -875,13 +875,14 @@ document.addEventListener("DOMContentLoaded", function() {
             barmode: 'stack',
             xaxis: { fixedrange: true },
             yaxis: { title: 'Amount (€)' },
-            legend: {
-                orientation: 'h',
-                y: -0.2,
-                x: 0.5,
-                xanchor: 'center',
-                yanchor: 'top'
-            },
+            showlegend: false,
+            // legend: {
+            //     orientation: 'h',
+            //     y: -0.2,
+            //     x: 0.5,
+            //     xanchor: 'center',
+            //     yanchor: 'top'
+            // },
             hovermode: 'closest',
             plot_bgcolor: 'rgba(0,0,0,0)',  // Transparent plot background
             paper_bgcolor: 'rgba(0,0,0,0)',  // Transparent paper background
