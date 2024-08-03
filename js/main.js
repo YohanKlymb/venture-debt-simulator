@@ -587,7 +587,7 @@ document.addEventListener("DOMContentLoaded", function() {
           };
 
         // Adjust layout
-        // layout.margin = {l: 20, r: 10, b: 10, t: 20, pad: 2};
+        layout.margin = {r: 10};
         // layout.autosize = false;
         // const dim = document.querySelector('.chart-div').getBoundingClientRect()
         // const ratio = {width: 16, height: 9}
