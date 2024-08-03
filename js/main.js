@@ -591,7 +591,7 @@ document.addEventListener("DOMContentLoaded", function() {
         layout.autosize = false;
         const dim = document.querySelector('.chart-div').getBoundingClientRect()
         const ratio = {width: 16, height: 9}
-        const width = dim.width * 0.9
+        const width = dim.width
         const height = width / ratio.width * ratio.height
         layout.width = width;
         layout.height = dim.height * 0.9;
