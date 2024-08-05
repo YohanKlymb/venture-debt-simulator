@@ -88,6 +88,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 const trimmedValue = input.value.trim();
                 values[input.name] = (trimmedValue === '' || trimmedValue === '%') ? null : parseFloat(trimmedValue) / 100;
             } else if (input.type === 'select-one' && input.name === 'klymb_advisory_service') {
+                console.log('Klymb advisory : ', input.value)
                 values[input.name] = input.value === 'Yes';
             } else {
                 values[input.name] = input.value ? input.value : null;
@@ -1002,10 +1003,13 @@ document.addEventListener("DOMContentLoaded", function() {
     const runwayInput = document.querySelector('#current_runway');
     runwayInput.addEventListener('blur', triggerRunwayAlert);
 
+    // Add event listener to changes in the form
     inputs.forEach(input => {
         input.addEventListener('blur', updateResults);
         input.addEventListener('keydown', updateResults);
     });
+    const klymbAdvisory = document.getElementById('klymb_advisory_service');
+    klymbAdvisory.addEventListener('change', updateResults);
 
     // Initial capture on page load
     updateResults();
