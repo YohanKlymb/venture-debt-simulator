@@ -566,10 +566,8 @@ document.addEventListener("DOMContentLoaded", function() {
             responsive: true
           };
 
-          console.log(layout)
         // Adjust layout
         if (! ("margin" in layout)) {
-            console.log("change margins")
             layout.margin = {r: 30, b:30};
         }
 
@@ -849,7 +847,7 @@ document.addEventListener("DOMContentLoaded", function() {
             // width: 400,
             // height: 240,
             // autosize: true,
-            margin: { t: 80, r: 80, b: 80, l: 80 },
+            margin: { t: 30, r: 40, b: 30, l: 40 },
             polar: {
                 radialaxis: {
                     showgrid: true,
