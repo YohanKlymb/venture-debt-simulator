@@ -69,6 +69,19 @@
             justify-content: space-around;
             max-width: 100%;
         }
+        .chart {
+            width: 45%;
+            min-width: 300px;
+            box-sizing: content-box;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            flex: 0 auto;
+            min-height: 400px;
+            margin: 0 3px 20px;
+            padding-top: 0;
+            padding-bottom: 0;
+            box-shadow: 1px 3px 8px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body>
@@ -145,13 +158,14 @@
     
         <h2>Financial Overview Chart</h2>
         <div id="chart-container" class="chart-container">
-            <div id="debt_radar_chart" style="max-width: 40%;"></div>
-            <div id="cost_comparison_chart" style="max-width: 40%;"></div>
-            <div id="retained_valuation_gap_chart" style="max-width: 40%;"></div>
-            <div id="payment_schedule_chart" style="max-width: 40%;"></div>
+            <div class="chart" id="debt_radar_chart"></div>
+            <div class="chart" id="cost_comparison_chart"></div>
+            <div class="chart" id="retained_valuation_gap_chart"></div>
+            <div class="chart" id="payment_schedule_chart"></div>
         </div>
     </div>
 
-    <script src="https://yohanklymb.github.io/venture-debt-simulator-public/js/main.min.js"></script>
+    <!-- <script src="https://yohanklymb.github.io/venture-debt-simulator-public/js/main.min.js"></script> -->
+    <script src="js/main.js"></script>
 </body>
 </html>

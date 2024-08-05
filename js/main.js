@@ -220,7 +220,7 @@ document.addEventListener("DOMContentLoaded", function() {
         const { debtAmountMin, debtAmountMax } = calculateDebtRange(arr, klymb_advisory_service);
         const score = calculateScore(values);
         const debtAmount = roundToSignificantDigits(calculateDebtParam(score, debtAmountMin, debtAmountMax));
-        const scoreBoost = scoreBooster(score, klymb_advisory_service, 0.05)
+        const scoreBoost = scoreBooster(score, klymb_advisory_service, 0.1)
         console.log('Score: ', score, scoreBoost, klymb_advisory_service)
 
         let debtTermSheet = {
@@ -587,38 +587,11 @@ document.addEventListener("DOMContentLoaded", function() {
           };
 
         // Adjust layout
-        layout.margin = {r: 10};
-        // layout.autosize = false;
-        // const dim = document.querySelector('.chart-div').getBoundingClientRect()
-        // const ratio = {width: 16, height: 9}
-        // const width = dim.width
-        // const height = width / ratio.width * ratio.height
-        // layout.width = width;
-        // layout.height = dim.height * 0.9;
-        // console.log("Dimensions : ", width, height)
-        // // layout.height = 400//dim.height * 0.9;
-
-        // Check if the chart has been rendered before by checking for existing data
-        if (!chartElement.data || chartElement.data.length === 0 || onlyRender) {
-            // Initial rendering using Plotly.newPlot
-            Plotly.newPlot(chartId, data, layout, config).then(adjustClipPaths);
-        } else {
-            Plotly.newPlot(chartId, data, layout, config).then(adjustClipPaths);
-            return
-            // Updating the chart with animations using Plotly.animate
-            Plotly.animate(chartId, {
-                data: data,
-                layout: layout
-            }, {
-                transition: {
-                    duration: 1000,
-                    easing: 'cubic-in-out'
-                },
-                frame: {
-                    duration: 1000
-                }
-            });
+        if (! "margin" in layout) {
+            layout.margin = {r: 20, b:20};
         }
+
+        Plotly.newPlot(chartId, data, layout, config)//.then(adjustClipPaths);
     }
 
     function chartCostComparison(totalPaid, remainingBalance, retainedValuesDebt, retainedValuesEquity, aggregateThreshold=0.2) {
@@ -629,73 +602,39 @@ document.addEventListener("DOMContentLoaded", function() {
 
         // Create data series
         let debtPaidSerie = {
-            x: ['Debt financing'],
+            x: ['Cost of debt'],
             y: [totalPaid],
             name: 'Total Paid',
             type: 'bar',
             marker: {
                 color: '#8434B4',
             },
-            text: 'Total Paid',
-            textposition: 'inside',
-            textfont: {
-                size: fontSize,
-                weight: 'bold'
-            },
-            hovertemplate: '%{y:.3s}<extra></extra>'
+            hovertemplate: '<b>Total Paid:</b> %{y:.3s}<extra></extra>'
         }
 
         let debtRemainingSerie = {
-            x: ['Debt financing'],
+            x: ['Cost of debt'],
             y: [remainingBalance],
             name: 'Remaining Balance',
             type: 'bar',
             marker: {
                 color: '#ce93d8',
             },
-            text: 'Remaining Balance',
-            textposition: 'inside',
-            textfont: {
-                size: fontSize,
-                weight: 'bold'
-            },
-            hovertemplate: '%{y:.3s}<extra></extra>'
+            hovertemplate: '<b>Remaining Balance:</b> %{y:.3s}<extra></extra>'
         }
 
         let equityCostSerie = {
-            x: ['Equity financing'],
+            x: ['Cost of Dilution'],
             y: [equityCost],
             name: 'Cost of Dilution',
             type: 'bar',
             marker: {
                 color: '#bbbbbb',
             },
-            text: 'Cost of Dilution',
-            textposition: 'inside',
-            textfont: {
-                color: 'white',
-                size: fontSize,
-                weight: 'bold'
-            },
             hovertemplate: '%{y:.3s}<extra></extra>'
         }
 
-        // Data for the bar chart while handeling the case where Paid + Remaining block is too small
-        if ((totalPaid  <= (aggregateThreshold * equityCost)) || (remainingBalance <= (aggregateThreshold * equityCost))){
-            
-            // Generate useful values
-            const debtCost = totalPaid + remainingBalance
-            debtPaidSerie.y = [debtCost]
-            debtPaidSerie.name = 'Cost of Debt'
-            debtPaidSerie.text = 'Cost of Debt'
-            debtPaidSerie.textposition = 'auto'
-
-            // Create the data
-            data = [debtPaidSerie, equityCostSerie]
-
-        } else {
-            data = [debtPaidSerie, debtRemainingSerie, equityCostSerie]
-        }
+        data = [debtPaidSerie, debtRemainingSerie, equityCostSerie]
 
         // Calculate dynamic axis ranges
         const yValues = [totalPaid + remainingBalance, equityCost]
@@ -707,13 +646,12 @@ document.addEventListener("DOMContentLoaded", function() {
             barmode: 'stack',
             title: 'Debt vs Equity financing cost',
             showlegend: false,  // Hide legend
-            // width: 400,
-            // height: 240,
             xaxis: {
                 showgrid: false,  // Hide x-axis grid lines
                 zeroline: false,  // Hide x-axis zero line
                 showline: false,  // Hide x-axis line
-                showticklabels: true  // Show x-axis labels
+                showticklabels: true,  // Show x-axis labels
+                fixedrange: true  // Disable zoom for x-axis
             },
             yaxis: {
                 range: [ymin, ymax],
@@ -721,7 +659,8 @@ document.addEventListener("DOMContentLoaded", function() {
                 zeroline: false,  // Hide y-axis zero line
                 showline: false,  // Hide y-axis line
                 showticklabels: true,  // Show y-axis labels
-                title: 'Amount (€)' 
+                title: 'Amount (€)',
+                fixedrange: true  // Disable zoom for x-axis
             },
             hovermode: 'closest',
             plot_bgcolor: 'rgba(0,0,0,0)',  // Transparent plot background
@@ -805,25 +744,22 @@ document.addEventListener("DOMContentLoaded", function() {
         const layout = {
             title: 'Retained Values Over Time',
             showlegend: false,  // Hide legend
-            // width: 400,
-            // height: 240,
-            // autosize: true,
-            // margin: { t: 30, r: 30, b: 30, l: 30 },
             xaxis: {
                 fixedrange: true,
                 showgrid: false,  // Hide x-axis grid lines
                 zeroline: false,  // Hide x-axis zero line
                 showline: true,  // Show x-axis line
                 showticklabels: true,  // Show x-axis labels
-                range: [1, nbMonths]
-                // title: 'Months'
+                range: [1, nbMonths],
+                fixedrange: true  // Disable zoom for x-axis
             },
             yaxis: {
                 showgrid: false,  // Hide y-axis grid lines
                 zeroline: false,  // Hide y-axis zero line
                 showline: true,  // Show y-axis line
                 showticklabels: true,  // Show y-axis labels
-                title: 'Retained Value'
+                title: 'Retained Value',
+                fixedrange: true  // Disable zoom for x-axis
             },
             hovermode: 'closest',
             plot_bgcolor: 'rgba(0,0,0,0)',  // Transparent plot background
@@ -874,15 +810,8 @@ document.addEventListener("DOMContentLoaded", function() {
             title: 'Yearly loan amortization forecast',
             barmode: 'stack',
             xaxis: { fixedrange: true },
-            yaxis: { title: 'Amount (€)' },
+            yaxis: { title: 'Amount (€)', fixedrange: true },
             showlegend: false,
-            // legend: {
-            //     orientation: 'h',
-            //     y: -0.2,
-            //     x: 0.5,
-            //     xanchor: 'center',
-            //     yanchor: 'top'
-            // },
             hovermode: 'closest',
             plot_bgcolor: 'rgba(0,0,0,0)',  // Transparent plot background
             paper_bgcolor: 'rgba(0,0,0,0)',  // Transparent paper background
@@ -893,7 +822,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     function chartDebtRatingRadar(debtTermSheet, irr) {
         // Radar plot data
-        const styler = (x) => `<br><span style='color:#8434B4; font-size:12; font-style: italic;'>${x}</span>`;
+        const styler = (x) => `<br><span style='color:#8434B4; font-size:10; font-style: italic;'>${x}</span>`;
         
         const categories = [
             `Interest-only${styler(`${debtTermSheet.interestOnlyPeriod} months`)}`, 
@@ -925,7 +854,7 @@ document.addEventListener("DOMContentLoaded", function() {
             marker: {
                 line: {
                     color: "#8434B4",
-                    width: 2
+                    width: 0
                 }
             },
             line: {
@@ -938,14 +867,15 @@ document.addEventListener("DOMContentLoaded", function() {
             // width: 400,
             // height: 240,
             // autosize: true,
-            // margin: { t: 30, r: 30, b: 30, l: 30 },
+            margin: { t: 80, r: 80, b: 80, l: 80 },
             polar: {
                 radialaxis: {
                     showgrid: true,
                     showticklabels: false,
                     ticks: '',
                     showline: false,  // Remove radial axis line
-                    range: [0, 1]
+                    range: [0, 1],
+                    fixedrange: true
                 },
                 angularaxis: {
                     rotation: 80,
@@ -955,9 +885,12 @@ document.addEventListener("DOMContentLoaded", function() {
                     tickfont: {
                         size: 16,
                         color: 'Black'  // Custom font size and color for angular axis
-                    }
+                    },
+                    fixedrange: true
                 }
             },
+            dragmode:false,
+            modeBarButtonsToRemove: ['zoom2d', 'pan2d', 'select2d', 'lasso2d', 'zoomIn2d', 'zoomOut2d', 'autoScale2d', 'resetScale2d'],
             paper_bgcolor: 'rgba(0,0,0,0)',
             plot_bgcolor: 'rgba(0,0,0,0)',
             annotations: [
@@ -965,13 +898,22 @@ document.addEventListener("DOMContentLoaded", function() {
                     text: `<b>IRR: ${(irr * 100).toFixed(2)}%</b>`,
                     xref: "paper", 
                     yref: "paper",
-                    font: { size: 18 },
+                    font: { size: 14 },
                     x: 0.5,
                     y: 0.5,
                     showarrow: false
                 }
             ]
         };
+
+        // Update layout for mobile
+        const mediaQuery = window.matchMedia('(max-width: 767px)');
+        if (mediaQuery.matches) { 
+            layout.polar.angularaxis.tickfont.size = 8;  // Smaller font size for mobile
+            layout.annotations[0].font.size = 9;  // Smaller annotation font size for mobile
+            layout.width = 300;  // Smaller width for mobile
+            layout.height = 300;  // Smaller height for mobile
+        }
 
         renderOrUpdatePlot('debt_radar_chart', data, layout);
     }
@@ -1058,28 +1000,12 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Add event listeners to runway input alert
     const runwayInput = document.querySelector('#current_runway');
-    // runwayInput.addEventListener('input', triggerRunwayAlert);
     runwayInput.addEventListener('blur', triggerRunwayAlert);
 
     inputs.forEach(input => {
         input.addEventListener('blur', updateResults);
+        input.addEventListener('keydown', updateResults);
     });
-
-    // Adjust clip paths on window resize
-    // window.addEventListener('resize', function() {
-    //     adjustClipPaths();
-    //     Plotly.Plots.resize('debt_radar_chart');
-    //     Plotly.Plots.resize('payment_schedule_chart');
-    //     Plotly.Plots.resize('retained_valuation_gap_chart');
-    //     Plotly.Plots.resize('cost_comparison_chart');
-    // });
-
-    // Observe DOM changes for each container
-    // const plotlyContainers = document.querySelectorAll('.plotly-container');
-    // plotlyContainers.forEach(container => {
-    //     const observer = new MutationObserver(adjustClipPaths);
-    //     observer.observe(container, { attributes: true, childList: true, subtree: true });
-    // });
 
     // Initial capture on page load
     updateResults();
