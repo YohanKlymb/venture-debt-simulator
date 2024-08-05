@@ -846,7 +846,7 @@ document.addEventListener("DOMContentLoaded", function() {
         const layout = {
             // width: 400,
             // height: 240,
-            autosize: true,
+            // autosize: true,
             margin: { t: 30, r: 20, b: 30, l: 60, pad: 0 },
             polar: {
                 radialaxis: {
