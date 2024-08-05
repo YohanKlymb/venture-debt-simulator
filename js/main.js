@@ -847,7 +847,7 @@ document.addEventListener("DOMContentLoaded", function() {
             // width: 400,
             // height: 240,
             autosize: true,
-            margin: { t: 20, r: 60, b: 20, l: 30 },
+            margin: { t: 20, r: 20, b: 20, l: 60 },
             polar: {
                 radialaxis: {
                     showgrid: true,
