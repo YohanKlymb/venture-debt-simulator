@@ -88,7 +88,6 @@ document.addEventListener("DOMContentLoaded", function() {
                 const trimmedValue = input.value.trim();
                 values[input.name] = (trimmedValue === '' || trimmedValue === '%') ? null : parseFloat(trimmedValue) / 100;
             } else if (input.type === 'select-one' && input.name === 'klymb_advisory_service') {
-                console.log('Klymb advisory : ', input.value)
                 values[input.name] = input.value === 'Yes';
             } else {
                 values[input.name] = input.value ? input.value : null;
@@ -222,7 +221,6 @@ document.addEventListener("DOMContentLoaded", function() {
         const score = calculateScore(values);
         const debtAmount = roundToSignificantDigits(calculateDebtParam(score, debtAmountMin, debtAmountMax));
         const scoreBoost = scoreBooster(score, klymb_advisory_service, 0.1)
-        console.log('Score: ', score, scoreBoost, klymb_advisory_service)
 
         let debtTermSheet = {
             isRunwayEnough: true,
@@ -557,25 +555,6 @@ document.addEventListener("DOMContentLoaded", function() {
     ////////////////////
     // Charts generation
     ////////////////////
-
-    function adjustClipPaths() {
-        
-        const plotlyContainers = document.querySelectorAll('.plot-container');
-        
-        plotlyContainers.forEach(container => {
-            const svg = container.querySelector('.main-svg');
-            const svgWidth = svg.clientWidth;
-            const svgHeight = svg.clientHeight;
-
-            console.log("SVG height :", svgHeight, "SVG Width : ", svgWidth)
-
-            const clipPaths = container.querySelectorAll('clipPath rect');
-            clipPaths.forEach(rect => {
-                rect.setAttribute('width', svgWidth);
-                rect.setAttribute('height', svgHeight);
-            });
-        });
-    }
 
     // Generic method to render or update a Plotly chart with animations
     function renderOrUpdatePlot(chartId, data, layout, onlyRender=false) {
