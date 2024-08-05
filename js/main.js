@@ -566,9 +566,11 @@ document.addEventListener("DOMContentLoaded", function() {
             responsive: true
           };
 
+          console.log(layout)
         // Adjust layout
-        if (! "margin" in layout) {
-            layout.margin = {r: 20, b:20};
+        if (! ("margin" in layout)) {
+            console.log("change margins")
+            layout.margin = {r: 30, b:30};
         }
 
         Plotly.newPlot(chartId, data, layout, config)//.then(adjustClipPaths);
