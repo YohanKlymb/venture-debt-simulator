@@ -847,7 +847,7 @@ document.addEventListener("DOMContentLoaded", function() {
             // width: 400,
             // height: 240,
             // autosize: true,
-            margin: { t: 30, r: 20, b: 30, l: 60, pad: 0 },
+            margin: { t: 80, r: 80, b: 80, l: 80 },
             polar: {
                 radialaxis: {
                     showgrid: true,
@@ -889,6 +889,7 @@ document.addEventListener("DOMContentLoaded", function() {
         // Update layout for mobile
         const mediaQuery = window.matchMedia('(max-width: 767px)');
         if (mediaQuery.matches) { 
+            layout.margin = { t: 40, r: 40, b: 40, l: 60, pad: 0 },
             layout.polar.angularaxis.tickfont.size = 8;  // Smaller font size for mobile
             layout.annotations[0].font.size = 9;  // Smaller annotation font size for mobile
             layout.width = 300;  // Smaller width for mobile
