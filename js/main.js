@@ -825,7 +825,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     function chartDebtRatingRadar(debtTermSheet, irr) {
         // Radar plot data
-        const styler = (x) => `<br><span style='color:#8434B4; font-size:8; font-style: italic;'>${x}</span>`;
+        const styler = (x) => `<br><span style='color:#8434B4; font-size:9; font-style: italic;'>${x}</span>`;
         
         const categories = [
             `Interest-only${styler(`${debtTermSheet.interestOnlyPeriod} months`)}`, 
@@ -913,7 +913,7 @@ document.addEventListener("DOMContentLoaded", function() {
         // const mediaQuery = window.matchMedia('(max-width: 767px)');
         if (isMobilePortrait()) { 
             layout.margin = { t: 30, b: 30, r: 30, l: 30 },
-            layout.polar.angularaxis.tickfont.size = 8;  // Smaller font size for mobile
+            layout.polar.angularaxis.tickfont.size = 10;  // Smaller font size for mobile
             layout.annotations[0].font.size = 10;  // Smaller annotation font size for mobile
         }
 
