@@ -558,7 +558,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Generic method to render or update a Plotly chart with animations
     function renderOrUpdatePlot(chartId, data, layout, onlyRender=false) {
-        const chartElement = document.getElementById(chartId);
 
         // Create config
         var config = {
@@ -916,8 +915,8 @@ document.addEventListener("DOMContentLoaded", function() {
             layout.margin = { t: 20, b: 20, r: 40, l: 40, pad: 0 },
             layout.polar.angularaxis.tickfont.size = 8;  // Smaller font size for mobile
             layout.annotations[0].font.size = 10;  // Smaller annotation font size for mobile
-            layout.width = 300;  // Smaller width for mobile
-            layout.height = 300;  // Smaller height for mobile
+            // layout.width = 300;  // Smaller width for mobile
+            // layout.height = 300;  // Smaller height for mobile
         }
 
         renderOrUpdatePlot('debt_radar_chart', data, layout);
