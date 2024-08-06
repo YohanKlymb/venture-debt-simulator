@@ -902,7 +902,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     text: `<b>IRR: ${(irr * 100).toFixed(2)}%</b>`,
                     xref: "paper", 
                     yref: "paper",
-                    font: { size: 10 },
+                    font: { size: 12 },
                     x: 0.5,
                     y: 0.5,
                     showarrow: false
@@ -913,9 +913,9 @@ document.addEventListener("DOMContentLoaded", function() {
         // Update layout for mobile
         // const mediaQuery = window.matchMedia('(max-width: 767px)');
         if (isMobilePortrait()) { 
-            layout.margin = { t: 40, b: 40, r: 'auto', l: 'auto', pad: 0 },
+            layout.margin = { t: 20, b: 20, r: 40, l: 40, pad: 0 },
             layout.polar.angularaxis.tickfont.size = 8;  // Smaller font size for mobile
-            layout.annotations[0].font.size = 9;  // Smaller annotation font size for mobile
+            layout.annotations[0].font.size = 10;  // Smaller annotation font size for mobile
             layout.width = 300;  // Smaller width for mobile
             layout.height = 300;  // Smaller height for mobile
         }
