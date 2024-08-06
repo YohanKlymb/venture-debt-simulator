@@ -912,11 +912,9 @@ document.addEventListener("DOMContentLoaded", function() {
         // Update layout for mobile
         // const mediaQuery = window.matchMedia('(max-width: 767px)');
         if (isMobilePortrait()) { 
-            layout.margin = { t: 20, b: 20, r: 40, l: 40, pad: 0 },
+            layout.margin = { t: 30, b: 30, r: 30, l: 30 },
             layout.polar.angularaxis.tickfont.size = 8;  // Smaller font size for mobile
             layout.annotations[0].font.size = 10;  // Smaller annotation font size for mobile
-            // layout.width = 300;  // Smaller width for mobile
-            // layout.height = 300;  // Smaller height for mobile
         }
 
         renderOrUpdatePlot('debt_radar_chart', data, layout);
