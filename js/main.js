@@ -574,6 +574,18 @@ document.addEventListener("DOMContentLoaded", function() {
         Plotly.newPlot(chartId, data, layout, config)//.then(adjustClipPaths);
     }
 
+    function isMobileDevice() {
+        // Check for mobile user agents
+        const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+        const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
+    
+        // Check screen size
+        const isSmallScreen = window.innerWidth <= 767;
+    
+        // Combine both checks
+        return isMobile || isSmallScreen;
+    }
+
     function chartCostComparison(totalPaid, remainingBalance, retainedValuesDebt, retainedValuesEquity, aggregateThreshold=0.2) {
         
         // Calculate the final difference between retainedValuesDebt and retainedValuesEquity
@@ -887,9 +899,9 @@ document.addEventListener("DOMContentLoaded", function() {
         };
 
         // Update layout for mobile
-        const mediaQuery = window.matchMedia('(max-width: 767px)');
-        if (mediaQuery.matches) { 
-            // layout.margin = { t: 40, b: 40, r: 'auto', l: 'auto', pad: 0 },
+        // const mediaQuery = window.matchMedia('(max-width: 767px)');
+        if (isMobileDevice()) { 
+            layout.margin = { t: 40, b: 40, r: 'auto', l: 'auto', pad: 0 },
             layout.polar.angularaxis.tickfont.size = 8;  // Smaller font size for mobile
             layout.annotations[0].font.size = 9;  // Smaller annotation font size for mobile
             layout.width = 300;  // Smaller width for mobile
