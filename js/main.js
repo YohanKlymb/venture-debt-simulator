@@ -574,16 +574,28 @@ document.addEventListener("DOMContentLoaded", function() {
         Plotly.newPlot(chartId, data, layout, config)//.then(adjustClipPaths);
     }
 
-    function isMobileDevice() {
-        // Check for mobile user agents
+    function isPortraitMode() {
+        return window.innerHeight > window.innerWidth;
+    }
+    
+    function isMobilePortrait() {
+        // Define user agents for phones and tablets separately
+        const phoneUserAgents = /android.*(mobile)|iphone|ipod|blackberry|iemobile|opera mini/i;
+        const tabletUserAgents = /ipad|android(?!.*mobile)/i;
+    
+        // Get the user agent string
         const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-        const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
     
-        // Check screen size
-        const isSmallScreen = window.innerWidth <= 767;
+        // Check if the device is a phone
+        const isPhone = phoneUserAgents.test(userAgent.toLowerCase());
+        // Check if the device is a tablet
+        const isTablet = tabletUserAgents.test(userAgent.toLowerCase());
     
-        // Combine both checks
-        return isMobile || isSmallScreen;
+        // Check if the screen is in portrait mode
+        const isPortrait = isPortraitMode();
+    
+        // Combine the checks
+        return isPhone && isPortrait;
     }
 
     function chartCostComparison(totalPaid, remainingBalance, retainedValuesDebt, retainedValuesEquity, aggregateThreshold=0.2) {
@@ -900,7 +912,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
         // Update layout for mobile
         // const mediaQuery = window.matchMedia('(max-width: 767px)');
-        if (isMobileDevice()) { 
+        if (isMobilePortrait()) { 
             layout.margin = { t: 40, b: 40, r: 'auto', l: 'auto', pad: 0 },
             layout.polar.angularaxis.tickfont.size = 8;  // Smaller font size for mobile
             layout.annotations[0].font.size = 9;  // Smaller annotation font size for mobile
