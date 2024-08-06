@@ -802,7 +802,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     function chartDebtRatingRadar(debtTermSheet, irr) {
         // Radar plot data
-        const styler = (x) => `<br><span style='color:#8434B4; font-size:10; font-style: italic;'>${x}</span>`;
+        const styler = (x) => `<br><span style='color:#8434B4; font-size:8; font-style: italic;'>${x}</span>`;
         
         const categories = [
             `Interest-only${styler(`${debtTermSheet.interestOnlyPeriod} months`)}`, 
@@ -847,7 +847,7 @@ document.addEventListener("DOMContentLoaded", function() {
             // width: 400,
             // height: 240,
             // autosize: true,
-            margin: { t: 80, r: 80, b: 80, l: 80 },
+            margin: { t: 40, r: 40, b: 40, l: 40 },
             polar: {
                 radialaxis: {
                     showgrid: true,
@@ -863,7 +863,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     showgrid: true,
                     showline: true,
                     tickfont: {
-                        size: 16,
+                        size: 12,
                         color: 'Black'  // Custom font size and color for angular axis
                     },
                     fixedrange: true
@@ -878,7 +878,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     text: `<b>IRR: ${(irr * 100).toFixed(2)}%</b>`,
                     xref: "paper", 
                     yref: "paper",
-                    font: { size: 14 },
+                    font: { size: 10 },
                     x: 0.5,
                     y: 0.5,
                     showarrow: false
@@ -889,7 +889,7 @@ document.addEventListener("DOMContentLoaded", function() {
         // Update layout for mobile
         const mediaQuery = window.matchMedia('(max-width: 767px)');
         if (mediaQuery.matches) { 
-            layout.margin = { t: 40, b: 40, r: 'auto', l: 'auto', pad: 0 },
+            // layout.margin = { t: 40, b: 40, r: 'auto', l: 'auto', pad: 0 },
             layout.polar.angularaxis.tickfont.size = 8;  // Smaller font size for mobile
             layout.annotations[0].font.size = 9;  // Smaller annotation font size for mobile
             layout.width = 300;  // Smaller width for mobile
