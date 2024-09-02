@@ -71,7 +71,7 @@ document.addEventListener("DOMContentLoaded", function() {
         let hasError = false;
 
         inputs.forEach(input => {
-            const isValid = validateInputValue(input); // Validate each input
+            const isValid = isInputValid(input); // Validate each input
 
             if (!isValid) {
                 hasError = true; // Flag that an error exists
