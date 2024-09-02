@@ -66,35 +66,32 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
-    function triggerRunwayAlert(event) {
-        const input = event.target;
-        const runway = input.value;
-        if (runway !== null && runway < 12) {
-            showElement('runway-container');
-        } else {
-            hideElement('runway-container');
-        }
-    }
-
     function captureValues() {
         const values = {};
         inputs.forEach(input => {
-            if (input.type === 'number') {
-                values[input.name] = input.value ? parseFloat(input.value) || 0 : null;
-            }
-            else if (input.classList.contains('number-input')) {
-                values[input.name] = input.value ? parseFloat(input.value.replace(/,/g, '')) || 0 : null;
-            } else if (input.type === 'text' && input.value.includes('%')) {
-                const trimmedValue = input.value.trim();
-                values[input.name] = (trimmedValue === '' || trimmedValue === '%') ? null : parseFloat(trimmedValue) / 100;
-            } else if (input.type === 'select-one' && input.name === 'klymb_advisory_service') {
-                values[input.name] = input.value === 'Yes';
-            } else {
-                values[input.name] = input.value ? input.value : null;
+            try {
+                if (input.classList.contains('number-input')) {
+                    values[input.name] = input.value ? parseFloat(input.value.replace(/,/g, '')) || 0 : null;
+                    validateInputValue(input)
+                } else if (input.type === 'text' && input.value.includes('%')) {
+                    const trimmedValue = input.value.trim();
+                    values[input.name] = (trimmedValue === '' || trimmedValue === '%') ? null : parseFloat(trimmedValue) / 100;
+                    validateInputValue(input)
+                } else if (input.type === 'select-one' && input.name === 'klymb_advisory_service') {
+                    values[input.name] = input.value === 'Yes';
+                } else {
+                    values[input.name] = input.value ? input.value : null;
+                }
+            } catch (error) {
+                throw error;
             }
         });
         return values;
     }
+
+    //////////////////
+    // Validate inputs
+    //////////////////
 
     function hasNullValues(values) {
         for (const key in values) {
@@ -105,10 +102,48 @@ document.addEventListener("DOMContentLoaded", function() {
         return false;
     }
 
+    function validateInputValue(input) {
+        let value = input.value;
+    
+        if (input.classList.contains('number-input')) {
+            value = value.replace(/,/g, '');
+        } else if (input.classList.contains('percentage-input')) {
+            value = value.replace(/,/g, '').replace('%', '');
+        }
+    
+        // Check if the value is a valid positive number
+        if (!/^\d*\.?\d+$/.test(value)) { // Allow for decimal numbers
+            input.classList.add('input-error'); // Add the error class to the invalid input field
+            throw new Error(`Invalid value in field "${input.name}": ${input.value}`);
+        }
+    
+        // If the value is valid, remove any error class
+        input.classList.remove('input-error');
+        return;
+    }
+
+    function triggerRunwayAlert(event) {
+        const input = event.target;
+        const runway = input.value;
+        if (runway !== null && runway < 12) {
+            showElement('runway-container');
+        } else {
+            hideElement('runway-container');
+        }
+    }
+
+    function triggerDebtAlert(current_debt, amount) {
+        if (current_debt !== null && amount === 0) {
+            showElement('debt-container');
+        } else {
+            hideElement('debt-container');
+        }
+    }
+
     function calculateDebtRange(arr, klymb_advisory_service) {
         let debtAmountMin, debtAmountMax;
         if (klymb_advisory_service) {
-            debtAmountMin = 0.75 * arr;
+            debtAmountMin = 0.5 * arr;
             debtAmountMax = 1.5 * arr;
         } else {
             debtAmountMin = 0.5 * arr;
@@ -157,6 +192,11 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     function roundToSignificantDigits(value, significantDigits = null) {
+        // Handle limit cases
+        if (value === 0) {
+            return value;
+        }
+
         // If significantDigits is null, calculate it as the length of the number - 2
         if (significantDigits === null) {
             significantDigits = Math.floor(Math.log10(value)) - 1;
@@ -180,15 +220,47 @@ document.addEventListener("DOMContentLoaded", function() {
         } = values;
 
         let score = 0;
-        score += sigmoidAdjusted(revenue_growth, 0, 1.5) * 30; // Revenue growth weighted at 20%
-        score += sigmoidAdjusted(gross_margin, 50, 80) * 10; // Gross margin weighted at 20%
-        score += sigmoidAdjusted(current_runway, 9, 14) * 10; // Runway weighted at 10%
-        score += sigmoidAdjusted(current_valuation / arr, 12, 5) * 20; // Valuation weighted at 20%
-        score += sigmoidAdjusted(calculateBurnMultiple(arr, cash_burn, revenue_growth), 2.5, 1) * 30; // Burn multiple weighted at 20%
+        score += sigmoidAdjusted(revenue_growth, 0, 1.2) * 30; // Revenue growth weighted at 20%
+        score += sigmoidAdjusted(gross_margin, .5, .9) * 10; // Gross margin weighted at 20%
+        score += sigmoidAdjusted(current_runway, 11, 18) * 10; // Runway weighted at 10%
+        score += sigmoidAdjusted(current_valuation / arr, 5, 12) * 20; // Valuation weighted at 20%
+        score += calculateBurnScore(arr, calculateBurnMultiple(arr, cash_burn, revenue_growth)) * 30; // Burn multiple weighted at 20%
 
         // Normalize score to 0-1 range
         score = Math.max(0, Math.min(1, score / 100));
         return score;
+    }
+
+    function calculateBurnScore(arr, burn_multiple) {
+        // Based on a16z evaluation https://a16z.com/a-framework-for-navigating-down-markets/
+        let lower, upper;
+    
+        switch (true) {
+            case arr >= 0 && arr <= 10000000: // $0 - $10M
+                lower = 3.8;
+                upper = 1.1;
+                break;
+    
+            case arr > 10000000 && arr <= 25000000: // $10M - $25M
+                lower = 1.8;
+                upper = 0.8;
+                break;
+    
+            case arr > 25000000 && arr <= 75000000: // $25M - $75M
+                lower = 1.1;
+                upper = 0.5;
+                break;
+    
+            case arr > 75000000: // $75M+
+                lower = 0.9;
+                upper = 0;
+                break;
+    
+            default:
+                throw new Error("Invalid ARR range");
+        }
+    
+        return sigmoidAdjusted(burn_multiple, lower, upper);
     }
 
     function calculateDebtParam(score, min, max, step = null, reverseScale = false, isPercentage = false, isInteger = false) {
@@ -215,21 +287,20 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     function createDebtTermSheet(values) {
-        const { arr, current_runway, klymb_advisory_service } = values;
-        
+        const { arr, current_runway, klymb_advisory_service, current_debt } = values;
         const { debtAmountMin, debtAmountMax } = calculateDebtRange(arr, klymb_advisory_service);
         const score = calculateScore(values);
-        const debtAmount = roundToSignificantDigits(calculateDebtParam(score, debtAmountMin, debtAmountMax));
+        let debtAmount = roundToSignificantDigits(Math.max(0, calculateDebtParam(score, debtAmountMin, debtAmountMax) - current_debt));
         const scoreBoost = scoreBooster(score, klymb_advisory_service, 0.1)
 
         let debtTermSheet = {
             isRunwayEnough: true,
             debtAmount: debtAmount,
-            warrantCoverage: calculateDebtParam(scoreBoost, 0.075, 0.2, 0.005, reverseScale=true, isPercentage=true, isInteger=false),
-            warrantDiscount: calculateDebtParam(scoreBoost, 0.1, 0.3, 0.05, reverseScale=true, isPercentage=true, isInteger=false),
+            warrantCoverage: calculateDebtParam(scoreBoost, 0.07, 0.2, 0.005, reverseScale=true, isPercentage=true, isInteger=false),
+            warrantDiscount: calculateDebtParam(scoreBoost, 0.1, 0.25, 0.05, reverseScale=true, isPercentage=true, isInteger=false),
             interestRate: calculateDebtParam(scoreBoost, 0.1, 0.16, 0.005, reverseScale=true, isPercentage=true, isInteger=false),
-            interestOnlyPeriod: calculateDebtParam(scoreBoost, 6, 24, 6, reverseScale=false, isPercentage=false, isInteger=true),
-            straightAmortization: calculateDebtParam(scoreBoost, 18, 36, 6, reverseScale=false, isPercentage=false, isInteger=true),
+            interestOnlyPeriod: calculateDebtParam(scoreBoost, 6, 24, 3, reverseScale=false, isPercentage=false, isInteger=true),
+            straightAmortization: calculateDebtParam(scoreBoost, 18, 36, 3, reverseScale=false, isPercentage=false, isInteger=true),
             arrangementFees: calculateDebtParam(scoreBoost, 0.01, 0.03, 0.005, reverseScale=true, isPercentage=true, isInteger=false),
             exitFees: calculateDebtParam(scoreBoost, 0, 0.03, 0.005, reverseScale=true, isPercentage=true, isInteger=false),
         };
@@ -678,13 +749,10 @@ document.addEventListener("DOMContentLoaded", function() {
 
     function chartRetainedValue(retainedValuesDebt, retainedValuesEquity, currentRunway) {
         const nbMonths = retainedValuesDebt.length;
-        const emptyList = Array(nbMonths - 1).fill('');
-        const emptyPosition = Array(nbMonths - 1).fill('top');
         const valueDifference = retainedValuesDebt.map((item, index) => item - retainedValuesEquity[index]);
     
         // Split the data into two segments: solid line and dotted line
         const solidLineEndIndex = currentRunway - 1;
-        const dottedLineStartIndex = currentRunway;
     
         // Data for the solid part of the line chart
         const solidLineData = {
@@ -699,9 +767,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 color: '#607d8b',
                 width: 3
             },
-            text: emptyList.slice(0, solidLineEndIndex).concat(['Initial runway']),
-            textposition: emptyPosition.slice(0, solidLineEndIndex).concat(['left']),
-            hovertemplate: '%{y:.3s}<extra></extra>'
+            hovertemplate: '<b>Initial runway</b>: %{y:.3s}<extra></extra>'
         };
 
 
@@ -735,9 +801,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 width: 3,
                 dash: 'dot'
             },
-            text: emptyList.slice(dottedLineStartIndex - 1).concat(['Increased runway']),
-            textposition: emptyPosition.slice(dottedLineStartIndex - 1).concat(['left']),
-            hovertemplate: '%{y:.3s}<extra></extra>'
+            hovertemplate: '<b>Additional runway</b>: %{y:.3s}<extra></extra>'
         };
     
         // Data for the line chart
@@ -957,15 +1021,10 @@ document.addEventListener("DOMContentLoaded", function() {
 
     function updateResults() {
         // Update form values
-        const values = captureValues();
+        let values = captureValues();
 
-        // Show analysis if and only if all values are filled
-        if (hasNullValues(values)) {
-            hideElement('result-container');
-            return;
-        }
-
-        showElement('result-container');
+        // Overwrite Klymb advisory since we decided to remove the field
+        values.klymb_advisory_service = true
 
         // Compute debt informations
         const debtTermSheet = createDebtTermSheet(values);
@@ -974,6 +1033,17 @@ document.addEventListener("DOMContentLoaded", function() {
         const cashFlows = getCashFlowsArray(debtTermSheet.debtAmount, schedule)
         const irr = XIRR(cashFlows)
         const {totalPaid, remainingBalance} = computeTotalPaidAndRemaining(schedule, 'totalCost', newRunway);
+
+        // Add event listeners to debt input alert
+        triggerDebtAlert(values.current_debt, debtTermSheet.debtAmount);
+
+        // Show analysis if and only if all values are filled
+        if (hasNullValues(values) || debtTermSheet.debtAmount === 0) {
+            hideElement('result-container');
+            return;
+        }
+
+        showElement('result-container');
 
         // Generate / update charts
         updateCharts(values, debtTermSheet, schedule, newRunway, irr)
@@ -1009,8 +1079,8 @@ document.addEventListener("DOMContentLoaded", function() {
         input.addEventListener('blur', updateResults);
         input.addEventListener('keydown', updateResults);
     });
-    const klymbAdvisory = document.getElementById('klymb_advisory_service');
-    klymbAdvisory.addEventListener('change', updateResults);
+    // const klymbAdvisory = document.getElementById('klymb_advisory_service');
+    // klymbAdvisory.addEventListener('change', updateResults);
 
     // Initial capture on page load
     updateResults();
