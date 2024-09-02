@@ -68,24 +68,31 @@ document.addEventListener("DOMContentLoaded", function() {
 
     function captureValues() {
         const values = {};
+        let hasError = false;
+
         inputs.forEach(input => {
-            try {
-                if (input.classList.contains('number-input')) {
-                    values[input.name] = input.value ? parseFloat(input.value.replace(/,/g, '')) || 0 : null;
-                    validateInputValue(input)
-                } else if (input.type === 'text' && input.value.includes('%')) {
-                    const trimmedValue = input.value.trim();
-                    values[input.name] = (trimmedValue === '' || trimmedValue === '%') ? null : parseFloat(trimmedValue) / 100;
-                    validateInputValue(input)
-                } else if (input.type === 'select-one' && input.name === 'klymb_advisory_service') {
-                    values[input.name] = input.value === 'Yes';
-                } else {
-                    values[input.name] = input.value ? input.value : null;
-                }
-            } catch (error) {
-                throw error;
+            const isValid = validateInputValue(input); // Validate each input
+
+            if (!isValid) {
+                hasError = true; // Flag that an error exists
+            }
+
+            if (input.classList.contains('number-input')) {
+                values[input.name] = input.value ? parseFloat(input.value.replace(/,/g, '')) || 0 : null;
+            } else if (input.type === 'text' && input.value.includes('%')) {
+                const trimmedValue = input.value.trim();
+                values[input.name] = (trimmedValue === '' || trimmedValue === '%') ? null : parseFloat(trimmedValue) / 100;
+            } else if (input.type === 'select-one' && input.name === 'klymb_advisory_service') {
+                values[input.name] = input.value === 'Yes';
+            } else {
+                values[input.name] = input.value ? input.value : null;
             }
         });
+
+        if (hasError) {
+            throw new Error('Input error.');
+        }
+
         return values;
     }
 
@@ -102,24 +109,33 @@ document.addEventListener("DOMContentLoaded", function() {
         return false;
     }
 
-    function validateInputValue(input) {
+    function isInputValid(input) {
         let value = input.value;
+
+        // Skip validation if the field is empty
+        if (value === '') {
+            input.classList.remove('input-error'); // Ensure the error class is removed if the input is empty
+            return true; // Return null or handle as needed for empty fields
+        }
     
         if (input.classList.contains('number-input')) {
             value = value.replace(/,/g, '');
         } else if (input.classList.contains('percentage-input')) {
             value = value.replace(/,/g, '').replace('%', '');
+        } else {
+            return true; // Input type not handled yet
         }
     
         // Check if the value is a valid positive number
         if (!/^\d*\.?\d+$/.test(value)) { // Allow for decimal numbers
             input.classList.add('input-error'); // Add the error class to the invalid input field
-            throw new Error(`Invalid value in field "${input.name}": ${input.value}`);
+            console.log(`Invalid value in field "${input.name}": ${input.value}`);
+            return false;
         }
     
         // If the value is valid, remove any error class
         input.classList.remove('input-error');
-        return;
+        return true;
     }
 
     function triggerRunwayAlert(event) {
