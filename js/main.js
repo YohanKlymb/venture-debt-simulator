@@ -132,6 +132,12 @@ document.addEventListener("DOMContentLoaded", function() {
             console.log(`Invalid value in field "${input.name}": ${input.value}`);
             return false;
         }
+
+        // Specific check for strictly above zero for Cash Burn
+        if (input.id === 'cash_burn' && parseFloat(value) <= 0) {
+            input.classList.add('input-error'); // Add the error class to the invalid input field
+            return false; // Return false to indicate the input is invalid
+        }
     
         // If the value is valid, remove any error class
         input.classList.remove('input-error');
