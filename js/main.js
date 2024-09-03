@@ -130,7 +130,6 @@ document.addEventListener("DOMContentLoaded", function() {
         if (input.id === 'cash_burn' && parseFloat(value) <= 0) {
             input.classList.add('input-error'); // Add the error class to the invalid input field
             triggerHighRunwayAlert(0, forceTrigger=true)
-            console.log('CASH BURN')
             return false; // Return false to indicate the input is invalid
         }
     
