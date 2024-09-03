@@ -125,6 +125,14 @@ document.addEventListener("DOMContentLoaded", function() {
         } else {
             return true; // Input type not handled yet
         }
+
+        // Specific check for strictly above zero for Cash Burn
+        if (input.id === 'cash_burn' && parseFloat(value) <= 0) {
+            input.classList.add('input-error'); // Add the error class to the invalid input field
+            triggerHighRunwayAlert(0, forceTrigger=true)
+            console.log('CASH BURN')
+            return false; // Return false to indicate the input is invalid
+        }
     
         // Check if the value is a valid positive number
         if (!/^\d*\.?\d+$/.test(value)) { // Allow for decimal numbers
@@ -132,19 +140,13 @@ document.addEventListener("DOMContentLoaded", function() {
             console.log(`Invalid value in field "${input.name}": ${input.value}`);
             return false;
         }
-
-        // Specific check for strictly above zero for Cash Burn
-        if (input.id === 'cash_burn' && parseFloat(value) <= 0) {
-            input.classList.add('input-error'); // Add the error class to the invalid input field
-            return false; // Return false to indicate the input is invalid
-        }
     
         // If the value is valid, remove any error class
         input.classList.remove('input-error');
         return true;
     }
 
-    function triggerRunwayAlert(event) {
+    function triggerLowRunwayAlert(event) {
         const input = event.target;
         const runway = input.value;
         if (runway !== null && runway < 12) {
@@ -152,6 +154,15 @@ document.addEventListener("DOMContentLoaded", function() {
         } else {
             hideElement('runway-container');
         }
+    }
+
+    function triggerHighRunwayAlert(newRunway, forceTrigger=false) {
+        if ((newRunway !== null && newRunway > 60) || forceTrigger) {
+            showElement('growth-container');
+            return true
+        }
+        hideElement('growth-container');
+        return false
     }
 
     function triggerDebtAlert(current_debt, amount) {
@@ -1030,7 +1041,7 @@ document.addEventListener("DOMContentLoaded", function() {
     
         // Update cards value
         document.getElementById('amountRaised').textContent = formatToCurrency(debtTermSheet.debtAmount);
-        document.getElementById('additionalRunway').textContent = Math.round(newRunway - values.current_runway);
+        document.getElementById('additionalRunway').textContent = Math.round(newRunway - values.current_runway) + " months";
         document.getElementById('increasedValuation').textContent = formatToCurrency(computeValuationIncrease(valuationsDebt, values.current_runway, newRunway));
         document.getElementById('retainedOwnership').textContent = formatToPercentage(newOwnershipDebt - newOwnershipEquity);
     
@@ -1043,7 +1054,14 @@ document.addEventListener("DOMContentLoaded", function() {
 
     function updateResults() {
         // Update form values
-        let values = captureValues();
+        let values
+        try {
+            values = captureValues();
+        } catch(error) {
+            hideElement('result-container');
+            return
+        }
+        
 
         // Overwrite Klymb advisory since we decided to remove the field
         values.klymb_advisory_service = true
@@ -1054,13 +1072,15 @@ document.addEventListener("DOMContentLoaded", function() {
         const newRunway = computeNewCashRunway(values, debtTermSheet);
         const cashFlows = getCashFlowsArray(debtTermSheet.debtAmount, schedule)
         const irr = XIRR(cashFlows)
-        const {totalPaid, remainingBalance} = computeTotalPaidAndRemaining(schedule, 'totalCost', newRunway);
 
-        // Add event listeners to debt input alert
+        // Add event listener to debt input alert
         triggerDebtAlert(values.current_debt, debtTermSheet.debtAmount);
 
+        // Add event listener to "too large" runway, hence profitable or close to profitability businesses that are probably not suited for venture debt
+        const isRunwayTooLarge = triggerHighRunwayAlert(newRunway - values.current_runway)
+
         // Show analysis if and only if all values are filled
-        if (hasNullValues(values) || debtTermSheet.debtAmount === 0) {
+        if (hasNullValues(values) || debtTermSheet.debtAmount === 0 || isRunwayTooLarge) {
             hideElement('result-container');
             return;
         }
@@ -1094,7 +1114,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Add event listeners to runway input alert
     const runwayInput = document.querySelector('#current_runway');
-    runwayInput.addEventListener('blur', triggerRunwayAlert);
+    runwayInput.addEventListener('blur', triggerLowRunwayAlert);
 
     // Add event listener to changes in the form
     inputs.forEach(input => {
