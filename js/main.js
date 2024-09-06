@@ -157,6 +157,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     function triggerHighRunwayAlert(newRunway, forceTrigger=false) {
         if ((newRunway !== null && newRunway > 60) || forceTrigger) {
+            console.log('Runway Alert Force Trigger: ', forceTrigger)
             showElement('growth-container');
             return true
         }
@@ -1060,7 +1061,6 @@ document.addEventListener("DOMContentLoaded", function() {
             hideElement('result-container');
             return
         }
-        
 
         // Overwrite Klymb advisory since we decided to remove the field
         values.klymb_advisory_service = true
@@ -1072,14 +1072,18 @@ document.addEventListener("DOMContentLoaded", function() {
         const cashFlows = getCashFlowsArray(debtTermSheet.debtAmount, schedule)
         const irr = XIRR(cashFlows)
 
+        // Show analysis if and only if all values are filled
+        if (hasNullValues(values) || debtTermSheet.debtAmount === 0) {
+            hideElement('result-container');
+            return;
+        }
+
         // Add event listener to debt input alert
         triggerDebtAlert(values.current_debt, debtTermSheet.debtAmount);
 
         // Add event listener to "too large" runway, hence profitable or close to profitability businesses that are probably not suited for venture debt
         const isRunwayTooLarge = triggerHighRunwayAlert(newRunway - values.current_runway)
-
-        // Show analysis if and only if all values are filled
-        if (hasNullValues(values) || debtTermSheet.debtAmount === 0 || isRunwayTooLarge) {
+        if (isRunwayTooLarge) {
             hideElement('result-container');
             return;
         }
