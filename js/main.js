@@ -1268,8 +1268,9 @@ document.addEventListener("DOMContentLoaded", function() {
         triggerDebtAlert(values.current_debt, debtTermSheet.debtAmount);
 
         // Generate / update charts and display
-        updateCharts(values, debtTermSheet)
         showElement('result-container');
+        updateCharts(values, debtTermSheet);
+        
     }
 
     //////////////////
