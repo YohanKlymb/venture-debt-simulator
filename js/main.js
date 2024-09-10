@@ -2,6 +2,12 @@ document.addEventListener("DOMContentLoaded", function() {
     const form = document.querySelector('form');
     const inputs = form.querySelectorAll('input, select');
     const minRunway = 12;
+    const runwayThreshold = 60;
+    let isNearProfitableCompany = false;
+    let isProfitableCompany = false;
+    let isGrowthCompany = false;
+    const growthThreshold = 5000000 // 5m yearly negative cash burn
+    const corporateTaxRate = 0.25 // 25% assumed for European countries
 
     // Function to format the input value as currency
     function formatCurrencyInputOnBlur(event) {
@@ -111,33 +117,35 @@ document.addEventListener("DOMContentLoaded", function() {
 
     function isInputValid(input) {
         let value = input.value;
-
+    
         // Skip validation if the field is empty
         if (value === '') {
             input.classList.remove('input-error'); // Ensure the error class is removed if the input is empty
-            return true; // Return null or handle as needed for empty fields
+            return true; // Return true or handle as needed for empty fields
         }
     
         if (input.classList.contains('number-input')) {
-            value = value.replace(/,/g, '');
+            value = value.replace(/,/g, ''); // Remove commas for number fields
         } else if (input.classList.contains('percentage-input')) {
-            value = value.replace(/,/g, '').replace('%', '');
+            value = value.replace(/,/g, '').replace('%', ''); // Remove commas and % for percentage fields
         } else {
             return true; // Input type not handled yet
         }
-
-        // Specific check for strictly above zero for Cash Burn
-        if (input.id === 'cash_burn' && parseFloat(value) <= 0) {
-            input.classList.add('input-error'); // Add the error class to the invalid input field
-            triggerHighRunwayAlert(0, forceTrigger=true)
-            return false; // Return false to indicate the input is invalid
-        }
     
-        // Check if the value is a valid positive number
-        if (!/^\d*\.?\d+$/.test(value)) { // Allow for decimal numbers
-            input.classList.add('input-error'); // Add the error class to the invalid input field
-            console.log(`Invalid value in field "${input.name}": ${input.value}`);
-            return false;
+        // Special handling for cash_burn field to allow negative values
+        if (input.id === 'cash_burn') {
+            if (!/^-?\d*\.?\d+$/.test(value)) { // Allow for negative and decimal numbers
+                input.classList.add('input-error'); // Add error class if invalid
+                console.log(`Invalid value in field "${input.name}": ${input.value}`);
+                return false;
+            }
+        } else {
+            // General check for other fields to allow only positive numbers
+            if (!/^\d*\.?\d+$/.test(value)) { // Allow for decimal numbers
+                input.classList.add('input-error'); // Add the error class to the invalid input field
+                console.log(`Invalid value in field "${input.name}": ${input.value}`);
+                return false;
+            }
         }
     
         // If the value is valid, remove any error class
@@ -145,10 +153,9 @@ document.addEventListener("DOMContentLoaded", function() {
         return true;
     }
 
-    function triggerLowRunwayAlert(event) {
-        const input = event.target;
-        const runway = input.value;
-        if (runway !== null && runway < 12) {
+    function triggerLowRunwayAlert() {
+        const runway = parseFloat(runwayInput.value);
+        if (runway !== null && runway < 12 && !isNearProfitableCompany) {
             showElement('runway-container');
         } else {
             hideElement('runway-container');
@@ -156,13 +163,35 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     function triggerHighRunwayAlert(newRunway, forceTrigger=false) {
-        if ((newRunway !== null && newRunway > 60) || forceTrigger) {
-            console.log('Runway Alert Force Trigger: ', forceTrigger)
-            showElement('growth-container');
-            return true
+        let isHighRunway = false
+        if ((newRunway !== null && newRunway > runwayThreshold) || forceTrigger) {
+            isNearProfitableCompany = true;
+            hideElement('additionalRunway', focusParent=true);
+            hideElement('increasedValuation', focusParent=true);
+            hideElement('cost_comparison_chart');
+            hideElement('retained_valuation_gap_chart');
+            isHighRunway = true
+        } else {
+            isNearProfitableCompany = false;
+            showElement('additionalRunway', focusParent=true);
+            showElement('increasedValuation', focusParent=true);
+            showElement('cost_comparison_chart');
+            showElement('retained_valuation_gap_chart');
         }
-        hideElement('growth-container');
-        return false
+
+        if (isProfitableCompany) {
+            showElement('afterTaxCostOfDebt', focusParent=true);
+        } else {
+            hideElement('afterTaxCostOfDebt', focusParent=true);
+        }
+
+        if (isGrowthCompany) {
+            showElement('growth-container');
+        } else {
+            hideElement('growth-container');
+        }
+
+        return isHighRunway
     }
 
     function triggerDebtAlert(current_debt, amount) {
@@ -173,15 +202,9 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
-    function calculateDebtRange(arr, klymb_advisory_service) {
-        let debtAmountMin, debtAmountMax;
-        if (klymb_advisory_service) {
-            debtAmountMin = 0.5 * arr;
-            debtAmountMax = 1.5 * arr;
-        } else {
-            debtAmountMin = 0.5 * arr;
-            debtAmountMax = 1.0 * arr;
-        }
+    function calculateDebtRange(arr) {
+        const debtAmountMin = 0.5 * arr;
+        const debtAmountMax = 1.5 * arr;
         return { debtAmountMin, debtAmountMax };
     }
 
@@ -191,11 +214,8 @@ document.addEventListener("DOMContentLoaded", function() {
         return burnMultiple
     }
 
-    function scoreBooster(score, isAdvised=false, advisoryBonus=0.1) {
-        if (isAdvised) {
-            score = Math.min(1, score * (1 + advisoryBonus))
-        }
-        return score
+    function scoreBooster(score, booster=0) {
+        return Math.min(1, score * (1 + booster))
     }
 
     function sigmoid(x) {
@@ -253,11 +273,25 @@ document.addEventListener("DOMContentLoaded", function() {
         } = values;
 
         let score = 0;
-        score += sigmoidAdjusted(revenue_growth, 0, 1.2) * 30; // Revenue growth weighted at 20%
+        score += sigmoidAdjusted(revenue_growth, 0.3, 1.2) * 30; // Revenue growth weighted at 20%
         score += sigmoidAdjusted(gross_margin, .5, .9) * 10; // Gross margin weighted at 20%
-        score += sigmoidAdjusted(current_runway, 11, 18) * 10; // Runway weighted at 10%
         score += sigmoidAdjusted(current_valuation / arr, 5, 12) * 20; // Valuation weighted at 20%
-        score += calculateBurnScore(arr, calculateBurnMultiple(arr, cash_burn, revenue_growth)) * 30; // Burn multiple weighted at 20%
+        if (isNearProfitableCompany) {
+            score += 10; // Runway weighted at 10%
+        } else {
+            score += sigmoidAdjusted(current_runway, 10, 18) * 10; // Runway weighted at 10%
+        }
+
+        // Get the minimum score between the ruleof40 and the burnMultiple to accomodate profitable businesses as well
+        let cashBurnScore = 0;
+        if (cash_burn <= 0) {
+            cashBurnScore = 1;
+        } else {
+            cashBurnScore = calculateBurnScore(arr, calculateBurnMultiple(arr, cash_burn, revenue_growth)); // Burn multiple weighted at 20%
+        }
+        const ruleOf40 = calculateRuleOf40(arr, revenue_growth, cash_burn);
+        const ruleOf40Score = ruleOf40ProxyScore(ruleOf40);
+        score += Math.min(cashBurnScore, ruleOf40Score) * 30;
 
         // Normalize score to 0-1 range
         score = Math.max(0, Math.min(1, score / 100));
@@ -296,6 +330,39 @@ document.addEventListener("DOMContentLoaded", function() {
         return sigmoidAdjusted(burn_multiple, lower, upper);
     }
 
+    function calculateRuleOf40(arr, monthlyGrowthRate, monthlyCashBurn) {
+        // Step 1: Calculate the Annual Growth Rate from the Monthly Growth Rate
+        const annualGrowthRate = Math.pow(1 + monthlyGrowthRate, 12) - 1;
+    
+        // Step 2: Calculate the Cash Flow Margin
+        const cashFlowMargin = monthlyCashBurn / (arr / 12);
+    
+        // Step 3: Calculate the Rule of 40 proxy (sum of annual growth rate and cash flow margin)
+        const ruleOf40 = annualGrowthRate + cashFlowMargin;
+    
+        return ruleOf40;
+    }
+
+    function ruleOf40ProxyScore(ruleOf40) {
+        let score = 0;
+    
+        switch (true) {
+            case (ruleOf40 < 20):
+                score = 0; // Below 20% considered poor performance
+                break;
+            case (ruleOf40 <= 40):
+                score = ((ruleOf40 - 20) / (40 - 20)) * 0.6; // Normalize between 0 and 0.6
+                break;
+            case (ruleOf40 <= 60):
+                score = 0.6 + ((ruleOf40 - 40) / (60 - 40)) * 0.4; // Normalize between 0.6 and 1
+                break;
+            default:
+                score = 1; // Above 60% considered excellent performance
+        }
+    
+        return score;
+    }
+
     function calculateDebtParam(score, min, max, step = null, reverseScale = false, isPercentage = false, isInteger = false) {
         let result;
         if (reverseScale) {
@@ -319,26 +386,79 @@ document.addEventListener("DOMContentLoaded", function() {
         return result;
     }
 
+    function afterTaxCostOfDebt(interestRate, arrangementFees, exitFees, loanDuration) {
+        // Calculate the after-tax cost of debt
+        const afterTaxCost = (interestRate + arrangementFees/loanDuration + exitFees/loanDuration) * (1 - corporateTaxRate);
+        return afterTaxCost;
+    }
+
+    function addTaxDeduction(schedule) {
+
+        // Accumulate fees to amortize them
+        let totalFees = 0
+        for (let i = 0; i < schedule.length; i++) {
+            totalFees += schedule[i].fees;
+        }
+        const monthlyFees = totalFees / schedule.length
+    
+        // Calculate the tax deduction by combinint interest deduction and amortized fee deduction
+        for (let i = 0; i < schedule.length; i++) {
+            schedule[i].taxDeduction = -(schedule[i].interest + monthlyFees) * corporateTaxRate;
+        }
+    
+        return schedule; // Return the modified schedule1
+    }
+
     function createDebtTermSheet(values) {
         const { arr, current_runway, klymb_advisory_service, current_debt } = values;
-        const { debtAmountMin, debtAmountMax } = calculateDebtRange(arr, klymb_advisory_service);
+        const { debtAmountMin, debtAmountMax } = calculateDebtRange(arr);
         const score = calculateScore(values);
-        let debtAmount = roundToSignificantDigits(Math.max(0, calculateDebtParam(score, debtAmountMin, debtAmountMax) - current_debt));
-        const scoreBoost = scoreBooster(score, klymb_advisory_service, 0.1)
+        const booster = klymb_advisory_service * 0.1 + isNearProfitableCompany * 0.1 + isGrowthCompany * 0.1
+        const scoreBoost = scoreBooster(score, booster)
+        let debtAmount = roundToSignificantDigits(Math.max(0, calculateDebtParam(scoreBoost, debtAmountMin, debtAmountMax) - current_debt));
 
         let debtTermSheet = {
             isRunwayEnough: true,
+            isTaxDeductible: isProfitableCompany,
             debtAmount: debtAmount,
             warrantCoverage: calculateDebtParam(scoreBoost, 0.07, 0.2, 0.005, reverseScale=true, isPercentage=true, isInteger=false),
             warrantDiscount: calculateDebtParam(scoreBoost, 0.1, 0.25, 0.05, reverseScale=true, isPercentage=true, isInteger=false),
-            interestRate: calculateDebtParam(scoreBoost, 0.1, 0.16, 0.005, reverseScale=true, isPercentage=true, isInteger=false),
+            interestRate: calculateDebtParam(scoreBoost, 0.09, 0.16, 0.005, reverseScale=true, isPercentage=true, isInteger=false),
             interestOnlyPeriod: calculateDebtParam(scoreBoost, 6, 24, 3, reverseScale=false, isPercentage=false, isInteger=true),
             straightAmortization: calculateDebtParam(scoreBoost, 18, 36, 3, reverseScale=false, isPercentage=false, isInteger=true),
             arrangementFees: calculateDebtParam(scoreBoost, 0.01, 0.03, 0.005, reverseScale=true, isPercentage=true, isInteger=false),
             exitFees: calculateDebtParam(scoreBoost, 0, 0.03, 0.005, reverseScale=true, isPercentage=true, isInteger=false),
         };
 
-        if (current_runway < minRunway) {
+        if (isGrowthCompany) {
+            debtTermSheet.warrantCoverage = 0;
+            debtTermSheet.warrantDiscount = 0;
+            const additionalAmortization = 6 - ((score - 0.8) * (18 - 6)) / (1 - 0.8)
+            debtTermSheet.straightAmortization += Math.round(additionalAmortization / 6) * 6
+        }
+
+        debtTermSheet.schedule = generatePaymentSchedule(debtTermSheet);
+        debtTermSheet.newRunway = computeNewCashRunway(values, debtTermSheet);
+        debtTermSheet.cashFlows = getCashFlowsArray(debtTermSheet.debtAmount, debtTermSheet.schedule)
+        debtTermSheet.irr = XIRR(debtTermSheet.cashFlows)
+
+        if (isProfitableCompany) {
+            const loanDuration = (debtTermSheet.interestOnlyPeriod + debtTermSheet.straightAmortization) / 12
+            debtTermSheet.afterTaxCostOfDebt = afterTaxCostOfDebt(debtTermSheet.interestRate, debtTermSheet.arrangementFees, debtTermSheet.exitFees, loanDuration)
+            debtTermSheet.schedule = addTaxDeduction(debtTermSheet.schedule)
+        }
+
+        // Add event listener to "too large" runway, hence profitable or close to profitability businesses that are probably not suited for venture debt
+        const isVentureCompany = isNearProfitableCompany === false;
+        triggerHighRunwayAlert(debtTermSheet.newRunway - values.current_runway)
+        triggerLowRunwayAlert() // Make sure to call triggerLowRunwayAlert AFTER triggerHighRunwayAlert which changes the state of isNearProfitableCompany
+
+        // If the company is eligible to growth debt, but wasn't before 
+        if (isVentureCompany && isNearProfitableCompany) {
+            return createDebtTermSheet(values);
+        }
+
+        if (current_runway < minRunway && !isNearProfitableCompany) {
             debtTermSheet.isRunwayEnough = false;
         }
 
@@ -356,7 +476,12 @@ document.addEventListener("DOMContentLoaded", function() {
         const newCash = currentCash + debtAmount;
         
         // Compute the new runway in months
-        const newRunway = Math.round(newCash / cash_burn);
+        let newRunway = 0;
+        if (cash_burn <= 0) {
+            newRunway = Infinity;
+        } else {
+            newRunway = Math.round(newCash / cash_burn);
+        }
     
         return newRunway;
     }
@@ -471,9 +596,6 @@ document.addEventListener("DOMContentLoaded", function() {
         // Calculate fixed monthly payment for the amortization period
         const monthlyPayment = (debtAmount * monthlyInterestRate) / (1 - Math.pow(1 + monthlyInterestRate, -straightAmortization));
     
-        // Calculate monthly principal payment for the amortization period
-        const monthlyPrincipalPayment = debtAmount / straightAmortization;
-    
         // Initialize outstanding principal
         let outstandingPrincipal = debtAmount;
     
@@ -519,18 +641,21 @@ document.addEventListener("DOMContentLoaded", function() {
         return paymentSchedule;
     }
 
-    function aggregateSchedule(schedule) {
+    function aggregateSchedule(schedule, isTaxDeductible=false) {
         const yearlyData = [];
-        let currentYear = { interest: 0, fees: 0, principal: 0 };
+        let currentYear = { interest: 0, fees: 0, principal: 0, taxDeduction: 0 };
     
         schedule.forEach((month, index) => {
             currentYear.interest += month.interest;
             currentYear.fees += month.fees;
             currentYear.principal += month.principal;
+            if (isTaxDeductible) {
+                currentYear.taxDeduction += month.taxDeduction;
+            }
     
             if ((index + 1) % 12 === 0) {
                 yearlyData.push(currentYear);
-                currentYear = { interest: 0, fees: 0, principal: 0 };
+                currentYear = { interest: 0, fees: 0, principal: 0, taxDeduction: 0 };
             }
         });
     
@@ -615,19 +740,29 @@ document.addEventListener("DOMContentLoaded", function() {
         return valuationsEquity;
     }
 
-    function computeValuationMetrics(values, debtTermSheet, runway, transitionPeriod=6) {
+    function computeValuationMetrics(values, debtTermSheet, transitionPeriod=6) {
         const { revenue_growth, current_valuation, current_ownership } = values;
-        const { debtAmount } = debtTermSheet;
-    
-        const monthlyGrowthRate = yearlyToMonthlyGrowthRate(revenue_growth);
-        const valuationsDebt = computeGrowingValuation(current_valuation, monthlyGrowthRate, runway);
-        
-        // Compute equity valuations with transition period
-        const valuationsEquity = computeEquityValuation(debtTermSheet, valuationsDebt, transitionPeriod);
-    
+        const { debtAmount, newRunway } = debtTermSheet;
+
+        // Compute generic values
         const newOwnershipDebt = current_ownership;
         const newOwnershipEquity = simulateNewOwnership(current_valuation, current_ownership, debtAmount);
-    
+
+        if (newRunway >= runwayThreshold) {
+            return {
+                valuationsDebt: [],
+                valuationsEquity: [],
+                newOwnershipDebt,
+                newOwnershipEquity,
+                retainedValuesDebt: [],
+                retainedValuesEquity: []
+            };
+        }
+        
+        // Compute cash burning businesses metrics
+        const monthlyGrowthRate = yearlyToMonthlyGrowthRate(revenue_growth);
+        const valuationsDebt = computeGrowingValuation(current_valuation, monthlyGrowthRate, newRunway);
+        const valuationsEquity = computeEquityValuation(debtTermSheet, valuationsDebt, transitionPeriod);
         const retainedValuesDebt = valuationsDebt.map(valuation => valuation * newOwnershipDebt);
         const retainedValuesEquity = valuationsEquity.map(valuation => valuation * newOwnershipEquity);
     
@@ -870,8 +1005,8 @@ document.addEventListener("DOMContentLoaded", function() {
         renderOrUpdatePlot('retained_valuation_gap_chart', data, layout, onlyRender=true);
     }
     
-    function chartYearlyPayments(schedule) {
-        const yearlyData = aggregateSchedule(schedule);
+    function chartYearlyPayments(schedule, isTaxDeductible=false) {
+        const yearlyData = aggregateSchedule(schedule, isTaxDeductible);
         const years = yearlyData.map((_, index) => `Year ${index + 1}`);
         const interest = yearlyData.map(year => year.interest);
         const fees = yearlyData.map(year => year.fees);
@@ -903,12 +1038,24 @@ document.addEventListener("DOMContentLoaded", function() {
                 hovertemplate: '<b>Fees:</b> %{y:.3s}<extra></extra>'
             },
         ];
+
+        if (isTaxDeductible) {
+            const taxDeduction = yearlyData.map(year => year.taxDeduction);
+            data.push({
+                x: years,
+                y: taxDeduction,
+                name: 'Tax deductible',
+                type: 'bar',
+                marker: { color: '#314047' },
+                hovertemplate: '<b>Tax deduction:</b> %{y:.3s}<extra></extra>'
+            })
+        }
     
         const layout = {
             // width: 400,
             // height: 240,
             title: 'Yearly loan amortization forecast',
-            barmode: 'stack',
+            barmode: 'relative',
             xaxis: { fixedrange: true },
             yaxis: { title: 'Amount (€)', fixedrange: true },
             showlegend: false,
@@ -920,7 +1067,7 @@ document.addEventListener("DOMContentLoaded", function() {
         renderOrUpdatePlot('payment_schedule_chart', data, layout, onlyRender=true);
     }
 
-    function chartDebtRatingRadar(debtTermSheet, irr) {
+    function chartDebtRatingRadar(debtTermSheet) {
         // Radar plot data
         const styler = (x) => `<br><span style='color:#8434B4; font-size:9; font-style: italic;'>${x}</span>`;
         
@@ -995,7 +1142,7 @@ document.addEventListener("DOMContentLoaded", function() {
             plot_bgcolor: 'rgba(0,0,0,0)',
             annotations: [
                 {
-                    text: `<b>IRR: ${(irr * 100).toFixed(2)}%</b>`,
+                    text: `<b>IRR: ${(debtTermSheet.irr * 100).toFixed(2)}%</b>`,
                     xref: "paper", 
                     yref: "paper",
                     font: { size: 12 },
@@ -1017,17 +1164,39 @@ document.addEventListener("DOMContentLoaded", function() {
         renderOrUpdatePlot('debt_radar_chart', data, layout);
     }
 
-    function showElement(elementId) {
-        const container = document.getElementById(elementId);
-        container.classList.add('show');
+    function showElement(elementId, focusParent = false) {
+        const element = document.getElementById(elementId);
+        
+        if (!element) {
+            console.error(`Element with ID ${elementId} not found`);
+            return;
+        }
+    
+        if (focusParent && element.parentElement) {
+            element.parentElement.classList.add('show');
+        } else {
+            element.classList.add('show');
+        }
+    }
+    
+    function hideElement(elementId, focusParent = false) {
+        const element = document.getElementById(elementId);
+        
+        if (!element) {
+            console.error(`Element with ID ${elementId} not found`);
+            return;
+        }
+    
+        if (focusParent && element.parentElement) {
+            element.parentElement.classList.remove('show');
+        } else {
+            element.classList.remove('show');
+        }
     }
 
-    function hideElement(elementId) {
-        const container = document.getElementById(elementId);
-        container.classList.remove('show');
-    }
-
-    function updateCharts(values, debtTermSheet, schedule, newRunway, irr) {
+    function updateCharts(values, debtTermSheet) {
+        const { debtAmount, schedule, newRunway, isTaxDeductible } = debtTermSheet;
+        const { current_runway } = values;
         const { totalPaid, remainingBalance } = computeTotalPaidAndRemaining(schedule, 'totalCost', newRunway);
     
         const {
@@ -1037,19 +1206,31 @@ document.addEventListener("DOMContentLoaded", function() {
             newOwnershipEquity,
             retainedValuesDebt,
             retainedValuesEquity
-        } = computeValuationMetrics(values, debtTermSheet, newRunway, 6);
+        } = computeValuationMetrics(values, debtTermSheet, 6);
     
+        // Update elements applicable to all scenarios
         // Update cards value
-        document.getElementById('amountRaised').textContent = formatToCurrency(debtTermSheet.debtAmount);
-        document.getElementById('additionalRunway').textContent = Math.round(newRunway - values.current_runway) + " months";
-        document.getElementById('increasedValuation').textContent = formatToCurrency(computeValuationIncrease(valuationsDebt, values.current_runway, newRunway));
+        document.getElementById('amountRaised').textContent = formatToCurrency(debtAmount);
         document.getElementById('retainedOwnership').textContent = formatToPercentage(newOwnershipDebt - newOwnershipEquity);
     
-        // Update charts with animation
-        chartDebtRatingRadar(debtTermSheet, irr);
-        chartCostComparison(totalPaid, remainingBalance, retainedValuesDebt, retainedValuesEquity);
-        chartRetainedValue(retainedValuesDebt, retainedValuesEquity, values.current_runway);
-        chartYearlyPayments(schedule);
+        // Update charts
+        chartDebtRatingRadar(debtTermSheet);
+        chartYearlyPayments(schedule, isTaxDeductible);
+
+        // Update elements applicable to non-profitable businesses
+        if (isNearProfitableCompany) {
+            // Update cards value
+            document.getElementById('additionalRunway').textContent = Math.round(newRunway - current_runway) + " months";
+            document.getElementById('increasedValuation').textContent = formatToCurrency(computeValuationIncrease(valuationsDebt, current_runway, newRunway));
+
+            // Update charts
+            chartCostComparison(totalPaid, remainingBalance, retainedValuesDebt, retainedValuesEquity);
+            chartRetainedValue(retainedValuesDebt, retainedValuesEquity, current_runway);
+        }
+
+        if (isProfitableCompany) {
+            document.getElementById('afterTaxCostOfDebt').textContent = formatToPercentage(debtTermSheet.afterTaxCostOfDebt);
+        }
     }
 
     function updateResults() {
@@ -1065,12 +1246,13 @@ document.addEventListener("DOMContentLoaded", function() {
         // Overwrite Klymb advisory since we decided to remove the field
         values.klymb_advisory_service = true
 
+        // Check high growth business
+        isProfitableCompany = values.cash_burn < 0;
+        isGrowthCompany = (-12 * values.cash_burn) > growthThreshold;
+        isNearProfitableCompany = isNearProfitableCompany || isProfitableCompany
+
         // Compute debt informations
         const debtTermSheet = createDebtTermSheet(values);
-        const schedule = generatePaymentSchedule(debtTermSheet);
-        const newRunway = computeNewCashRunway(values, debtTermSheet);
-        const cashFlows = getCashFlowsArray(debtTermSheet.debtAmount, schedule)
-        const irr = XIRR(cashFlows)
 
         // Show analysis if and only if all values are filled
         if (hasNullValues(values) || debtTermSheet.debtAmount === 0) {
@@ -1081,17 +1263,10 @@ document.addEventListener("DOMContentLoaded", function() {
         // Add event listener to debt input alert
         triggerDebtAlert(values.current_debt, debtTermSheet.debtAmount);
 
-        // Add event listener to "too large" runway, hence profitable or close to profitability businesses that are probably not suited for venture debt
-        const isRunwayTooLarge = triggerHighRunwayAlert(newRunway - values.current_runway)
-        if (isRunwayTooLarge) {
-            hideElement('result-container');
-            return;
-        }
-
         showElement('result-container');
 
         // Generate / update charts
-        updateCharts(values, debtTermSheet, schedule, newRunway, irr)
+        updateCharts(values, debtTermSheet)
     }
 
     //////////////////
@@ -1116,7 +1291,7 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 
     // Add event listeners to runway input alert
-    const runwayInput = document.querySelector('#current_runway');
+    const runwayInput = document.getElementById('current_runway');
     runwayInput.addEventListener('blur', triggerLowRunwayAlert);
 
     // Add event listener to changes in the form

@@ -52,6 +52,10 @@
             text-align: center;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             transition: transform 0.3s, box-shadow 0.3s;
+            display: none;
+        }
+        .card.show {
+            display: block;
         }
         .card:hover {
             transform: translateY(-10px);
@@ -84,6 +88,10 @@
             padding-top: 0;
             padding-bottom: 0;
             box-shadow: 1px 3px 8px rgba(0,0,0,0.1);
+            display: none;
+        }
+        .chart.show {
+            display: block;
         }
 
         /* Pictogram styling */
@@ -178,30 +186,34 @@
 
     <div class="result-container" id="result-container">
         <div class="cards-container">
-            <div class="card">
+            <div class="card show">
                 <div class="card-title">Amount Raised</div>
                 <div id="amountRaised" class="card-value"></div>
             </div>
-            <div class="card">
+            <div class="card show">
                 <div class="card-title">Additional Runway</div>
                 <div id="additionalRunway" class="card-value"></div>
             </div>
-            <div class="card">
+            <div class="card show">
                 <div class="card-title">Increased Valuation</div>
                 <div id="increasedValuation" class="card-value"></div>
             </div>
-            <div class="card">
+            <div class="card show">
                 <div class="card-title">Preserved Ownership</div>
                 <div id="retainedOwnership" class="card-value"></div>
+            </div>
+            <div class="card">
+                <div class="card-title">After-Tax Cost of Debt</div>
+                <div id="afterTaxCostOfDebt" class="card-value"></div>
             </div>
         </div>
     
         <h2>Financial Overview Chart</h2>
         <div id="chart-container" class="chart-container">
-            <div class="chart" id="debt_radar_chart"></div>
-            <div class="chart" id="cost_comparison_chart"></div>
-            <div class="chart" id="retained_valuation_gap_chart"></div>
-            <div class="chart" id="payment_schedule_chart"></div>
+            <div class="chart show" id="debt_radar_chart"></div>
+            <div class="chart show" id="cost_comparison_chart"></div>
+            <div class="chart show" id="retained_valuation_gap_chart"></div>
+            <div class="chart show" id="payment_schedule_chart"></div>
         </div>
     </div>
 
