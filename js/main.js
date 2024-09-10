@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", function() {
     let isGrowthCompany = false;
     const growthThreshold = 2000000 // 5m yearly negative cash burn
     const corporateTaxRate = 0.25 // 25% assumed for European countries
+    const arrThreshold = 1000000;
 
     // Function to format the input value as currency
     function formatCurrencyInputOnBlur(event) {
@@ -99,6 +100,17 @@ document.addEventListener("DOMContentLoaded", function() {
             throw new Error('Input error.');
         }
 
+        for (const input of inputs) {
+            if (input.value === '') {
+                hasError = true; // Raise error for empty field
+                break; // Exit the loop once an empty field is found
+            }
+        }
+
+        if (hasError) {
+            throw new Error('Input missing.')
+        }
+
         return values;
     }
 
@@ -157,8 +169,10 @@ document.addEventListener("DOMContentLoaded", function() {
         const runway = parseFloat(runwayInput.value);
         if (runway !== null && runway < 12 && !isNearProfitableCompany) {
             showElement('runway-container');
+            runwayInput.classList.add('input-error');
         } else {
             hideElement('runway-container');
+            runwayInput.classList.remove('input-error');
         }
     }
 
@@ -210,6 +224,18 @@ document.addEventListener("DOMContentLoaded", function() {
         } else {
             hideElement('debt-container');
         }
+    }
+
+    function triggerLowARRAlert(arr, cash_burn) {
+        const arrInput = document.getElementById('arr');
+        if (arr < arrThreshold || arr < cash_burn*12) {
+            showElement('arr-container');
+            arrInput.classList.add('input-error');
+            return true;
+        }
+        hideElement('arr-container');
+        arrInput.classList.remove('input-error');
+        return false;
     }
 
     function calculateDebtRange(arr) {
@@ -1253,6 +1279,12 @@ document.addEventListener("DOMContentLoaded", function() {
         } catch(error) {
             hideElement('result-container');
             return
+        }
+
+        const isARRTooLow = triggerLowARRAlert(values.arr, values.cash_burn)
+        if (isARRTooLow) {
+            hideElement('result-container');
+            return;
         }
 
         // Overwrite Klymb advisory since we decided to remove the field
