@@ -230,6 +230,8 @@ document.addEventListener("DOMContentLoaded", function() {
         const arrInput = document.getElementById('arr');
         if (arr < arrThreshold || arr < cash_burn*12) {
             showElement('arr-container');
+            hideElement('growth-container');
+            hideElement('near-profitability-container');
             arrInput.classList.add('input-error');
             return true;
         }
