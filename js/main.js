@@ -170,6 +170,7 @@ document.addEventListener("DOMContentLoaded", function() {
             hideElement('increasedValuation', focusParent=true);
             hideElement('cost_comparison_chart');
             hideElement('retained_valuation_gap_chart');
+            hideElement('afterTaxCostOfDebt', focusParent=true);
             isHighRunway = true
         } else {
             isNearProfitableCompany = false;
@@ -177,6 +178,7 @@ document.addEventListener("DOMContentLoaded", function() {
             showElement('increasedValuation', focusParent=true);
             showElement('cost_comparison_chart');
             showElement('retained_valuation_gap_chart');
+            hideElement('afterTaxCostOfDebt', focusParent=true);
         }
 
         if (isProfitableCompany) {
@@ -1200,8 +1202,6 @@ document.addEventListener("DOMContentLoaded", function() {
         const { debtAmount, schedule, newRunway, isTaxDeductible } = debtTermSheet;
         const { current_runway } = values;
         const { totalPaid, remainingBalance } = computeTotalPaidAndRemaining(schedule, 'totalCost', newRunway);
-
-        console.log(debtTermSheet, newRunway, current_runway)
     
         const {
             valuationsDebt,
