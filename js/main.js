@@ -181,12 +181,14 @@ document.addEventListener("DOMContentLoaded", function() {
 
         if (isProfitableCompany) {
             showElement('afterTaxCostOfDebt', focusParent=true);
+            isHighRunway = true
         } else {
             hideElement('afterTaxCostOfDebt', focusParent=true);
         }
 
         if (isGrowthCompany) {
             showElement('growth-container');
+            isHighRunway = true
         } else {
             hideElement('growth-container');
         }
@@ -1198,6 +1200,8 @@ document.addEventListener("DOMContentLoaded", function() {
         const { debtAmount, schedule, newRunway, isTaxDeductible } = debtTermSheet;
         const { current_runway } = values;
         const { totalPaid, remainingBalance } = computeTotalPaidAndRemaining(schedule, 'totalCost', newRunway);
+
+        console.log(debtTermSheet, newRunway, current_runway)
     
         const {
             valuationsDebt,
@@ -1218,7 +1222,7 @@ document.addEventListener("DOMContentLoaded", function() {
         chartYearlyPayments(schedule, isTaxDeductible);
 
         // Update elements applicable to non-profitable businesses
-        if (isNearProfitableCompany) {
+        if (!isNearProfitableCompany) {
             // Update cards value
             document.getElementById('additionalRunway').textContent = Math.round(newRunway - current_runway) + " months";
             document.getElementById('increasedValuation').textContent = formatToCurrency(computeValuationIncrease(valuationsDebt, current_runway, newRunway));
@@ -1249,7 +1253,7 @@ document.addEventListener("DOMContentLoaded", function() {
         // Check high growth business
         isProfitableCompany = values.cash_burn < 0;
         isGrowthCompany = (-12 * values.cash_burn) > growthThreshold;
-        isNearProfitableCompany = isNearProfitableCompany || isProfitableCompany
+        isNearProfitableCompany = isProfitableCompany
 
         // Compute debt informations
         const debtTermSheet = createDebtTermSheet(values);
@@ -1263,10 +1267,9 @@ document.addEventListener("DOMContentLoaded", function() {
         // Add event listener to debt input alert
         triggerDebtAlert(values.current_debt, debtTermSheet.debtAmount);
 
-        showElement('result-container');
-
-        // Generate / update charts
+        // Generate / update charts and display
         updateCharts(values, debtTermSheet)
+        showElement('result-container');
     }
 
     //////////////////
