@@ -6,7 +6,7 @@ document.addEventListener("DOMContentLoaded", function() {
     let isNearProfitableCompany = false;
     let isProfitableCompany = false;
     let isGrowthCompany = false;
-    const growthThreshold = 5000000 // 5m yearly negative cash burn
+    const growthThreshold = 2000000 // 5m yearly negative cash burn
     const corporateTaxRate = 0.25 // 25% assumed for European countries
 
     // Function to format the input value as currency
@@ -193,6 +193,12 @@ document.addEventListener("DOMContentLoaded", function() {
             isHighRunway = true
         } else {
             hideElement('growth-container');
+        }
+
+        if ((isNearProfitableCompany || isProfitableCompany) && !isGrowthCompany) {
+            showElement('near-profitability-container');
+        } else {
+            hideElement('near-profitability-container');
         }
 
         return isHighRunway
@@ -454,6 +460,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
         // Add event listener to "too large" runway, hence profitable or close to profitability businesses that are probably not suited for venture debt
         const isVentureCompany = isNearProfitableCompany === false;
+        console.log('Profitability : ', isNearProfitableCompany, isProfitableCompany, isGrowthCompany)
+        console.log('Runway : ', debtTermSheet.newRunway, values.current_runway)
         triggerHighRunwayAlert(debtTermSheet.newRunway - values.current_runway)
         triggerLowRunwayAlert() // Make sure to call triggerLowRunwayAlert AFTER triggerHighRunwayAlert which changes the state of isNearProfitableCompany
 
