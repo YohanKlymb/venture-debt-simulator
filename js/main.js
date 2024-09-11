@@ -228,7 +228,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     function triggerLowARRAlert(arr, cash_burn) {
         const arrInput = document.getElementById('arr');
-        if (arr < arrThreshold || arr < cash_burn*12) {
+        if (arr < arrThreshold || arr < cash_burn*6) {
             showElement('arr-container');
             hideElement('growth-container');
             hideElement('near-profitability-container');
@@ -260,8 +260,8 @@ document.addEventListener("DOMContentLoaded", function() {
         return 1 / (1 + Math.exp(-x));
     }
     
-    function sigmoidAdjusted(value, minVal, maxVal, curveCoef = 10) {
-        // return 1 if no range
+    function sigmoidAdjusted(value, minVal, maxVal, curveCoef = 10, midVal = null) {
+        // Return 1 if no range (minVal === maxVal)
         if (minVal === maxVal) {
             return 1;
         }
@@ -273,13 +273,24 @@ document.addEventListener("DOMContentLoaded", function() {
             maxVal = -maxVal;
         }
     
-        // Normalize the input value to a range suitable for the sigmoid function
-        // This is an optional step to adjust the spread of the sigmoid function.
-        // You can modify the factor to control the spread.
-        const normalizedValue = curveCoef * (value - minVal) / (maxVal - minVal) - curveCoef / 2;
+        // If midVal is not provided, set it as the midpoint between minVal and maxVal
+        if (midVal == null) {
+            midVal = (minVal + maxVal) / 2;
+        }
     
-        // Apply the sigmoid function
-        return sigmoid(normalizedValue);
+        // Normalize the input value to a range suitable for the sigmoid function
+        const normalizedValue = curveCoef * (value - midVal) / (maxVal - minVal);
+    
+        // Adjust output for boundaries: 
+        // values less than minVal should return between 0 and 0.1, 
+        // and values greater than maxVal should return between 0.9 and 1.
+        if (value < minVal) {
+            return 0.1 * sigmoid(normalizedValue);
+        } else if (value > maxVal) {
+            return 0.9 + 0.1 * sigmoid(normalizedValue);
+        } else {
+            return sigmoid(normalizedValue);
+        }
     }
 
     function roundToSignificantDigits(value, significantDigits = null) {
@@ -311,13 +322,13 @@ document.addEventListener("DOMContentLoaded", function() {
         } = values;
 
         let score = 0;
-        score += sigmoidAdjusted(revenue_growth, 0.3, 1.2) * 30; // Revenue growth weighted at 20%
-        score += sigmoidAdjusted(gross_margin, .5, .9) * 10; // Gross margin weighted at 20%
-        score += sigmoidAdjusted(current_valuation / arr, 5, 12) * 20; // Valuation weighted at 20%
+        score += sigmoidAdjusted(revenue_growth, 0, 1, 0.35) * 30;
+        score += sigmoidAdjusted(gross_margin, .1, .9, .5) * 20;
+        score += sigmoidAdjusted(current_valuation / arr, 5, 12) * 10;
         if (isNearProfitableCompany) {
-            score += 10; // Runway weighted at 10%
+            score += 10;
         } else {
-            score += sigmoidAdjusted(current_runway, 10, 18) * 10; // Runway weighted at 10%
+            score += sigmoidAdjusted(current_runway, 0, 18, 12) * 10;
         }
 
         // Get the minimum score between the ruleof40 and the burnMultiple to accomodate profitable businesses as well
@@ -325,14 +336,18 @@ document.addEventListener("DOMContentLoaded", function() {
         if (cash_burn <= 0) {
             cashBurnScore = 1;
         } else {
-            cashBurnScore = calculateBurnScore(arr, calculateBurnMultiple(arr, cash_burn, revenue_growth)); // Burn multiple weighted at 20%
+            cashBurnScore = calculateBurnScore(arr, calculateBurnMultiple(arr, cash_burn, revenue_growth));
         }
-        const ruleOf40 = calculateRuleOf40(arr, revenue_growth, cash_burn);
-        const ruleOf40Score = ruleOf40ProxyScore(ruleOf40);
-        score += Math.min(cashBurnScore, ruleOf40Score) * 30;
+        score += cashBurnScore * 20
+        // const ruleOf40 = calculateRuleOf40(arr, revenue_growth, cash_burn);
+        // const ruleOf40Score = ruleOf40ProxyScore(ruleOf40);
+        // console.log('Ruleof40 : ', ruleOf40, ruleOf40Score);
+        // score += Math.min(cashBurnScore, ruleOf40Score) * 20;
+
+
 
         // Normalize score to 0-1 range
-        score = Math.max(0, Math.min(1, score / 100));
+        score = Math.max(0, Math.min(1, score / 90));
         return score;
     }
 
@@ -343,21 +358,25 @@ document.addEventListener("DOMContentLoaded", function() {
         switch (true) {
             case arr >= 0 && arr <= 10000000: // $0 - $10M
                 lower = 3.8;
+                mid = 1.6;
                 upper = 1.1;
                 break;
     
             case arr > 10000000 && arr <= 25000000: // $10M - $25M
                 lower = 1.8;
+                mid = 1.4;
                 upper = 0.8;
                 break;
     
             case arr > 25000000 && arr <= 75000000: // $25M - $75M
                 lower = 1.1;
+                mid = 0.7;
                 upper = 0.5;
                 break;
     
             case arr > 75000000: // $75M+
                 lower = 0.9;
+                mid = 0.5;
                 upper = 0;
                 break;
     
@@ -365,18 +384,16 @@ document.addEventListener("DOMContentLoaded", function() {
                 throw new Error("Invalid ARR range");
         }
     
-        return sigmoidAdjusted(burn_multiple, lower, upper);
+        return sigmoidAdjusted(burn_multiple, lower, upper, mid);
     }
 
-    function calculateRuleOf40(arr, monthlyGrowthRate, monthlyCashBurn) {
-        // Step 1: Calculate the Annual Growth Rate from the Monthly Growth Rate
-        const annualGrowthRate = Math.pow(1 + monthlyGrowthRate, 12) - 1;
+    function calculateRuleOf40(arr, yearlyGrowthRate, monthlyCashBurn) {
     
-        // Step 2: Calculate the Cash Flow Margin
-        const cashFlowMargin = monthlyCashBurn / (arr / 12);
+        // Step 1: Calculate the Cash Flow Margin
+        const cashFlowMargin = - monthlyCashBurn / (arr / 12);
     
         // Step 3: Calculate the Rule of 40 proxy (sum of annual growth rate and cash flow margin)
-        const ruleOf40 = annualGrowthRate + cashFlowMargin;
+        const ruleOf40 = yearlyGrowthRate + cashFlowMargin;
     
         return ruleOf40;
     }
@@ -459,19 +476,21 @@ document.addEventListener("DOMContentLoaded", function() {
             isRunwayEnough: true,
             isTaxDeductible: isProfitableCompany,
             debtAmount: debtAmount,
-            warrantCoverage: calculateDebtParam(scoreBoost, 0.07, 0.2, 0.005, reverseScale=true, isPercentage=true, isInteger=false),
-            warrantDiscount: calculateDebtParam(scoreBoost, 0.1, 0.25, 0.05, reverseScale=true, isPercentage=true, isInteger=false),
-            interestRate: calculateDebtParam(scoreBoost, 0.09, 0.16, 0.005, reverseScale=true, isPercentage=true, isInteger=false),
-            interestOnlyPeriod: calculateDebtParam(scoreBoost, 6, 24, 3, reverseScale=false, isPercentage=false, isInteger=true),
-            straightAmortization: calculateDebtParam(scoreBoost, 18, 36, 3, reverseScale=false, isPercentage=false, isInteger=true),
-            arrangementFees: calculateDebtParam(scoreBoost, 0.01, 0.03, 0.005, reverseScale=true, isPercentage=true, isInteger=false),
+            warrantCoverage: calculateDebtParam(scoreBoost, 0.05, 0.2, 0.005, reverseScale=true, isPercentage=true, isInteger=false),
+            warrantDiscount: calculateDebtParam(scoreBoost, 0.05, 0.20, 0.05, reverseScale=true, isPercentage=true, isInteger=false),
+            interestRate: calculateDebtParam(scoreBoost, 0.09, 0.15, 0.005, reverseScale=true, isPercentage=true, isInteger=false),
+            interestOnlyPeriod: calculateDebtParam(scoreBoost, 6, 24, 6, reverseScale=false, isPercentage=false, isInteger=true),
+            straightAmortization: calculateDebtParam(scoreBoost, 18, 48, 6, reverseScale=false, isPercentage=false, isInteger=true),
+            arrangementFees: calculateDebtParam(scoreBoost, 0.01, 0.02, 0.005, reverseScale=true, isPercentage=true, isInteger=false),
             exitFees: calculateDebtParam(scoreBoost, 0, 0.03, 0.005, reverseScale=true, isPercentage=true, isInteger=false),
         };
 
         if (isGrowthCompany) {
             debtTermSheet.warrantCoverage = 0;
             debtTermSheet.warrantDiscount = 0;
-            const additionalAmortization = 6 - ((score - 0.8) * (18 - 6)) / (1 - 0.8)
+
+            // Add a minimum of 6 and up to 18 months if the score is >= 0.8
+            const additionalAmortization = 6 + Math.max(0, ((score - 0.8) * (18 - 6)) / (1 - 0.8)); 
             debtTermSheet.straightAmortization += Math.round(additionalAmortization / 6) * 6
         }
 
@@ -488,8 +507,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
         // Add event listener to "too large" runway, hence profitable or close to profitability businesses that are probably not suited for venture debt
         const isVentureCompany = isNearProfitableCompany === false;
-        console.log('Profitability : ', isNearProfitableCompany, isProfitableCompany, isGrowthCompany)
-        console.log('Runway : ', debtTermSheet.newRunway, values.current_runway)
         triggerHighRunwayAlert(debtTermSheet.newRunway - values.current_runway)
         triggerLowRunwayAlert() // Make sure to call triggerLowRunwayAlert AFTER triggerHighRunwayAlert which changes the state of isNearProfitableCompany
 
