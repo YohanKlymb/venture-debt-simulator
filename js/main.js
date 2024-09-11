@@ -323,8 +323,8 @@ document.addEventListener("DOMContentLoaded", function() {
         } = values;
 
         let score = 0;
-        score += sigmoidAdjusted(revenue_growth, .1, 1, 0.4) * 30;
-        score += sigmoidAdjusted(gross_margin, .1, .8, .4) * 20;
+        score += sigmoidAdjusted(revenue_growth, 0, 1, 0.6) * 30;
+        score += sigmoidAdjusted(gross_margin, .2, .8, .6) * 20;
         score += sigmoidAdjusted(current_valuation / arr, 2, 10, 5) * 10;
         if (isNearProfitableCompany) {
             score += 10;
@@ -483,8 +483,9 @@ document.addEventListener("DOMContentLoaded", function() {
         const { arr, current_runway, klymb_advisory_service, current_debt } = values;
         const { debtAmountMin, debtAmountMax } = calculateDebtRange(arr);
         const score = calculateScore(values);
-        const booster = klymb_advisory_service * 0.1 + isNearProfitableCompany * 0.1 + isGrowthCompany * 0.1
+        const booster = klymb_advisory_service * 0 + isNearProfitableCompany * 0.05 + isGrowthCompany * 0.1
         const scoreBoost = scoreBooster(score, booster)
+        // console.log('score : ', score, 'score boost', scoreBoost)
         let debtAmount = roundToSignificantDigits(Math.max(0, calculateDebtParam(scoreBoost, debtAmountMin, debtAmountMax) - current_debt));
 
         let debtTermSheet = {
