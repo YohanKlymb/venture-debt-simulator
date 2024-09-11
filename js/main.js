@@ -260,22 +260,23 @@ document.addEventListener("DOMContentLoaded", function() {
         return 1 / (1 + Math.exp(-x));
     }
     
-    function sigmoidAdjusted(value, minVal, maxVal, curveCoef = 10, midVal = null) {
+    function sigmoidAdjusted(value, minVal, maxVal, midVal = null, curveCoef = 10) {
         // Return 1 if no range (minVal === maxVal)
         if (minVal === maxVal) {
             return 1;
         }
     
+        // If midVal is not provided, set it as the midpoint between minVal and maxVal
+        if (midVal == null) {
+            midVal = (minVal + maxVal) / 2;
+        }
+
         // If reversed scale with minVal > maxVal, get the inverse of all values
         if (minVal > maxVal) {
             value = -value;
             minVal = -minVal;
             maxVal = -maxVal;
-        }
-    
-        // If midVal is not provided, set it as the midpoint between minVal and maxVal
-        if (midVal == null) {
-            midVal = (minVal + maxVal) / 2;
+            midVal = -midVal;
         }
     
         // Normalize the input value to a range suitable for the sigmoid function
@@ -322,13 +323,13 @@ document.addEventListener("DOMContentLoaded", function() {
         } = values;
 
         let score = 0;
-        score += sigmoidAdjusted(revenue_growth, 0, 1, 0.35) * 30;
-        score += sigmoidAdjusted(gross_margin, .1, .9, .5) * 20;
-        score += sigmoidAdjusted(current_valuation / arr, 5, 12) * 10;
+        score += sigmoidAdjusted(revenue_growth, .1, 1, 0.4) * 30;
+        score += sigmoidAdjusted(gross_margin, .1, .8, .4) * 20;
+        score += sigmoidAdjusted(current_valuation / arr, 2, 10, 5) * 10;
         if (isNearProfitableCompany) {
             score += 10;
         } else {
-            score += sigmoidAdjusted(current_runway, 0, 18, 12) * 10;
+            score += sigmoidAdjusted(current_runway, 6, 18, 12) * 10;
         }
 
         // Get the minimum score between the ruleof40 and the burnMultiple to accomodate profitable businesses as well
@@ -418,12 +419,26 @@ document.addEventListener("DOMContentLoaded", function() {
         return score;
     }
 
-    function calculateDebtParam(score, min, max, step = null, reverseScale = false, isPercentage = false, isInteger = false) {
+    function calculateDebtParam(score, min, max, mid = null, step = null, reverseScale = false, isPercentage = false, isInteger = false) {
         let result;
+
+        // If mid is not provided, set it to the midpoint between min and max
+        if (mid === null) {
+            mid = (min + max) / 2;
+        }
+
+        // Adjust result based on score and mid
         if (reverseScale) {
-            result = min + (1 - score) * (max - min);
+            // In case of reverse scale, flip the score
+            score = 1 - score;
+        }
+        
+        if (score < 0.5) {
+            // Interpolate between min and mid for the first half of the score
+            result = min + (score * 2) * (mid - min);
         } else {
-            result = min + score * (max - min);
+            // Interpolate between mid and max for the second half of the score
+            result = mid + ((score - 0.5) * 2) * (max - mid);
         }
     
         if (isPercentage) {
@@ -476,13 +491,13 @@ document.addEventListener("DOMContentLoaded", function() {
             isRunwayEnough: true,
             isTaxDeductible: isProfitableCompany,
             debtAmount: debtAmount,
-            warrantCoverage: calculateDebtParam(scoreBoost, 0.05, 0.2, 0.005, reverseScale=true, isPercentage=true, isInteger=false),
-            warrantDiscount: calculateDebtParam(scoreBoost, 0.05, 0.20, 0.05, reverseScale=true, isPercentage=true, isInteger=false),
-            interestRate: calculateDebtParam(scoreBoost, 0.09, 0.15, 0.005, reverseScale=true, isPercentage=true, isInteger=false),
-            interestOnlyPeriod: calculateDebtParam(scoreBoost, 6, 24, 6, reverseScale=false, isPercentage=false, isInteger=true),
-            straightAmortization: calculateDebtParam(scoreBoost, 18, 48, 6, reverseScale=false, isPercentage=false, isInteger=true),
-            arrangementFees: calculateDebtParam(scoreBoost, 0.01, 0.02, 0.005, reverseScale=true, isPercentage=true, isInteger=false),
-            exitFees: calculateDebtParam(scoreBoost, 0, 0.03, 0.005, reverseScale=true, isPercentage=true, isInteger=false),
+            warrantCoverage: calculateDebtParam(scoreBoost, 0.05, 0.25, 0.1, 0.005, reverseScale=true, isPercentage=true, isInteger=false),
+            warrantDiscount: calculateDebtParam(scoreBoost, 0.05, 0.20, 0.1, 0.05, reverseScale=true, isPercentage=true, isInteger=false),
+            interestRate: calculateDebtParam(scoreBoost, 0.09, 0.16, 0.14, 0.005, reverseScale=true, isPercentage=true, isInteger=false),
+            interestOnlyPeriod: calculateDebtParam(scoreBoost, 6, 24, 12, 6, reverseScale=false, isPercentage=false, isInteger=true),
+            straightAmortization: calculateDebtParam(scoreBoost, 12, 48, 36, 6, reverseScale=false, isPercentage=false, isInteger=true),
+            arrangementFees: calculateDebtParam(scoreBoost, 0.01, 0.025, 0.02, 0.005, reverseScale=true, isPercentage=true, isInteger=false),
+            exitFees: calculateDebtParam(scoreBoost, 0, 0.03, 0.02, 0.005, reverseScale=true, isPercentage=true, isInteger=false),
         };
 
         if (isGrowthCompany) {
@@ -1140,14 +1155,14 @@ document.addEventListener("DOMContentLoaded", function() {
         ];
 
         const values = [
-            sigmoidAdjusted(debtTermSheet.interestOnlyPeriod, 0, 24, 10),
-            sigmoidAdjusted(debtTermSheet.straightAmortization, 12, 48, 10),
-            sigmoidAdjusted(debtTermSheet.interestRate, 0.16, 0.1, 10),
-            sigmoidAdjusted(debtTermSheet.arrangementFees, 0.03, 0, 10),
-            sigmoidAdjusted(debtTermSheet.exitFees, 0.04, 0, 10),
-            sigmoidAdjusted(debtTermSheet.warrantCoverage, 0.3, 0, 6),
-            sigmoidAdjusted(debtTermSheet.warrantDiscount, 0.3, 0, 6),
-            sigmoidAdjusted(debtTermSheet.interestOnlyPeriod, 0, 24, 10),
+            sigmoidAdjusted(debtTermSheet.interestOnlyPeriod, 0, 24, 12, 10),
+            sigmoidAdjusted(debtTermSheet.straightAmortization, 12, 48, 30, 10),
+            sigmoidAdjusted(debtTermSheet.interestRate, 0.17, 0.09, 0.14, 10),
+            sigmoidAdjusted(debtTermSheet.arrangementFees, 0.04, 0, 0.02, 10),
+            sigmoidAdjusted(debtTermSheet.exitFees, 0.04, 0, 0.02, 10),
+            sigmoidAdjusted(debtTermSheet.warrantCoverage, 0.3, 0, 0.1, 6),
+            sigmoidAdjusted(debtTermSheet.warrantDiscount, 0.3, 0, 0.1, 6),
+            sigmoidAdjusted(debtTermSheet.interestOnlyPeriod, 0, 24, 12, 10),
         ];
 
         const data = [{
