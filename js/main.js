@@ -1,6 +1,7 @@
 document.addEventListener("DOMContentLoaded", function() {
     const form = document.querySelector('form');
     const inputs = form.querySelectorAll('input, select');
+    let isEditing = false;
     const minRunway = 12;
     const runwayThreshold = 60;
     let isNearProfitableCompany = false;
@@ -1316,6 +1317,11 @@ document.addEventListener("DOMContentLoaded", function() {
             return
         }
 
+        // Stop computation if the user is still editing
+        if (isEditing) {
+            return
+        }
+
         const isARRTooLow = triggerLowARRAlert(values.arr, values.cash_burn)
         if (isARRTooLow) {
             hideElement('result-container');
@@ -1373,10 +1379,22 @@ document.addEventListener("DOMContentLoaded", function() {
     const runwayInput = document.getElementById('current_runway');
     runwayInput.addEventListener('blur', triggerLowRunwayAlert);
 
-    // Add event listener to changes in the form
+    // Capture that the user is still editing
     inputs.forEach(input => {
-        input.addEventListener('blur', updateResults);
-        input.addEventListener('keydown', updateResults);
+        // Set isEditing to true when the input is focused
+        input.addEventListener('focus', () => {
+            isEditing = true;
+        });
+    
+        // Set isEditing to false after validation is done on blur
+        input.addEventListener('blur', (event) => {
+            isEditing = false;
+            updateResults()
+        });
+        input.addEventListener('keydown', (event) => {
+            isEditing = false;
+            updateResults();
+        });
     });
     // const klymbAdvisory = document.getElementById('klymb_advisory_service');
     // klymbAdvisory.addEventListener('change', updateResults);
