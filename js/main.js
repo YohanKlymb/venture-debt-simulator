@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", function() {
     let isNearProfitableCompany = false;
     let isProfitableCompany = false;
     let isGrowthCompany = false;
-    const growthThreshold = 2000000 // 5m yearly negative cash burn
+    const growthThreshold = 2000000 // 2m yearly negative cash burn
     const corporateTaxRate = 0.25 // 25% assumed for European countries
     const arrThreshold = 1000000;
 
@@ -29,7 +29,7 @@ document.addEventListener("DOMContentLoaded", function() {
         const rawValue = input.value.replace(/,/g, '');
         
         // Insert the comma at the cursor position if needed
-        const valueWithCommas = parseFloat(rawValue).toLocaleString('en-US', { maximumFractionDigits: 0 });
+        // const valueWithCommas = parseFloat(rawValue).toLocaleString('en-US', { maximumFractionDigits: 0 });
         
         // Set the formatted value
         input.value = rawValue;
@@ -77,6 +77,17 @@ document.addEventListener("DOMContentLoaded", function() {
     function captureValues() {
         const values = {};
         let hasError = false;
+        // List of required field names
+        const requiredFields = [
+            'revenue_growth',
+            'gross_margin',
+            'cash_burn',
+            'current_runway',
+            'current_valuation',
+            'current_ownership',
+            'arr'
+            // Add other required field names here
+        ];
 
         inputs.forEach(input => {
             const isValid = isInputValid(input); // Validate each input
@@ -101,10 +112,13 @@ document.addEventListener("DOMContentLoaded", function() {
             throw new Error('Input error.');
         }
 
+        // Check required fields for empty values
         for (const input of inputs) {
-            if (input.value === '') {
-                hasError = true; // Raise error for empty field
-                break; // Exit the loop once an empty field is found
+            if (requiredFields.includes(input.name)) {
+                if (input.value === '' || input.value === null || input.value === undefined) {
+                    hasError = true; // Raise error for empty required field
+                    break; // Exit the loop once an empty required field is found
+                }
             }
         }
 
@@ -219,14 +233,6 @@ document.addEventListener("DOMContentLoaded", function() {
         return isHighRunway
     }
 
-    function triggerDebtAlert(current_debt, amount) {
-        if (current_debt !== null && amount === 0) {
-            showElement('debt-container');
-        } else {
-            hideElement('debt-container');
-        }
-    }
-
     function triggerLowARRAlert(arr, cash_burn) {
         const arrInput = document.getElementById('arr');
         if (arr < arrThreshold || arr < cash_burn*6) {
@@ -249,6 +255,9 @@ document.addEventListener("DOMContentLoaded", function() {
 
     function calculateBurnMultiple(arr, cash_burn, revenue_growth) {
         const arrIncrease = arr * revenue_growth / 12
+        if (arrIncrease === 0) {
+            return Infinity;
+        }
         const burnMultiple = cash_burn / arrIncrease
         return burnMultiple
     }
@@ -480,17 +489,36 @@ document.addEventListener("DOMContentLoaded", function() {
         return schedule; // Return the modified schedule1
     }
 
-    function createDebtTermSheet(values) {
-        const { arr, current_runway, klymb_advisory_service, current_debt } = values;
+    function createDebtTermSheet(values, boosterCoef=null) {
+        const { arr, current_runway, klymb_advisory_service, amount_to_raise  } = values;
         const { debtAmountMin, debtAmountMax } = calculateDebtRange(arr);
         const score = calculateScore(values);
-        const booster = klymb_advisory_service * 0 + isNearProfitableCompany * 0.05 + isGrowthCompany * 0.1
+        let booster = 0
+        if (boosterCoef === null) {
+            booster = klymb_advisory_service * 0 + isNearProfitableCompany * 0.05 + isGrowthCompany * 0.1
+        } else {
+            booster = boosterCoef
+        }
         const scoreBoost = scoreBooster(score, booster)
-        // console.log('score : ', score, 'score boost', scoreBoost)
-        let debtAmount = roundToSignificantDigits(Math.max(0, calculateDebtParam(scoreBoost, debtAmountMin, debtAmountMax) - current_debt));
+        let debtAmountComputed = roundToSignificantDigits(Math.max(0, calculateDebtParam(scoreBoost, debtAmountMin, debtAmountMax)));
+
+        // Adjust debtAmount based on amount_to_raise
+        let debtAmount = debtAmountComputed;
+        let amountToRaiseExceeded = false;
+
+        if (amount_to_raise) {
+            if (amount_to_raise <= debtAmountComputed) {
+                debtAmount = amount_to_raise;
+            } else {
+                // Display a warning that the amount_to_raise exceeds the maximum computed debt amount
+                debtAmount = debtAmountComputed;
+                amountToRaiseExceeded = true;
+            }
+        }
 
         let debtTermSheet = {
             isRunwayEnough: true,
+            amountToRaiseExceeded: amountToRaiseExceeded,
             isTaxDeductible: isProfitableCompany,
             debtAmount: debtAmount,
             warrantCoverage: calculateDebtParam(scoreBoost, 0.05, 0.25, 0.1, 0.005, reverseScale=true, isPercentage=true, isInteger=false),
@@ -550,12 +578,7 @@ document.addEventListener("DOMContentLoaded", function() {
         const newCash = currentCash + debtAmount;
         
         // Compute the new runway in months
-        let newRunway = 0;
-        if (cash_burn <= 0) {
-            newRunway = Infinity;
-        } else {
-            newRunway = Math.round(newCash / cash_burn);
-        }
+        const newRunway = cash_burn > 0 ? Math.round(newCash / cash_burn) : Infinity;
     
         return newRunway;
     }
@@ -1141,60 +1164,140 @@ document.addEventListener("DOMContentLoaded", function() {
         renderOrUpdatePlot('payment_schedule_chart', data, layout, onlyRender=true);
     }
 
-    function chartDebtRatingRadar(debtTermSheet) {
-        // Radar plot data
+    function chartDebtRatingRadar(debtTermSheetHigh, debtTermSheetLow) {
+        // Helper function to format parameter ranges
+        function formatParameterRange(lowValue, highValue, unit = '', isPercentage = false, decimals = 2) {
+            // Format values with specified decimals
+            const formattedLow = isPercentage ? (lowValue * 100).toFixed(decimals) : lowValue.toFixed(decimals);
+            const formattedHigh = isPercentage ? (highValue * 100).toFixed(decimals) : highValue.toFixed(decimals);
+
+            // Remove trailing zeros and decimal points if not needed
+            const trimmedLow = formattedLow.replace(/\.00$/, '');
+            const trimmedHigh = formattedHigh.replace(/\.00$/, '');
+
+            if (trimmedLow === trimmedHigh) {
+                return `${trimmedLow}${unit}`;
+            } else {
+                return `${trimmedLow} - ${trimmedHigh}${unit}`;
+            }
+        }
+
+        // Styler function for labels
         const styler = (x) => `<br><span style='color:#8434B4; font-size:9; font-style: italic;'>${x}</span>`;
-        
+
+        // Define categories with formatted parameter ranges
         const categories = [
-            `Interest-only${styler(`${debtTermSheet.interestOnlyPeriod} months`)}`, 
-            `Loan amortization${styler(`${debtTermSheet.straightAmortization} months`)}`, 
-            `Interest rate${styler(`${(debtTermSheet.interestRate * 100).toFixed(2)}%`)}`, 
-            `Arrangement fee${styler(`${(debtTermSheet.arrangementFees * 100).toFixed(2)}%`)}`, 
-            `Exit fee${styler(`${(debtTermSheet.exitFees * 100).toFixed(2)}%`)}`, 
-            `Warrant coverage${styler(`${(debtTermSheet.warrantCoverage * 100).toFixed(2)}%`)}`, 
-            `Warrant discount${styler(`${(debtTermSheet.warrantDiscount * 100).toFixed(2)}%`)}`, 
-            `Interest-only${styler(`${debtTermSheet.interestOnlyPeriod} months`)}`, 
+            `Interest-only${styler(formatParameterRange(
+                debtTermSheetLow.interestOnlyPeriod,
+                debtTermSheetHigh.interestOnlyPeriod,
+                ' months'
+            ))}`,
+            `Loan amortization${styler(formatParameterRange(
+                debtTermSheetLow.straightAmortization,
+                debtTermSheetHigh.straightAmortization,
+                ' months'
+            ))}`,
+            `Interest rate${styler(formatParameterRange(
+                debtTermSheetLow.interestRate,
+                debtTermSheetHigh.interestRate,
+                '%',
+                true
+            ))}`,
+            `Arrangement fee${styler(formatParameterRange(
+                debtTermSheetLow.arrangementFees,
+                debtTermSheetHigh.arrangementFees,
+                '%',
+                true
+            ))}`,
+            `Exit fee${styler(formatParameterRange(
+                debtTermSheetLow.exitFees,
+                debtTermSheetHigh.exitFees,
+                '%',
+                true
+            ))}`,
+            `Warrant coverage${styler(formatParameterRange(
+                debtTermSheetLow.warrantCoverage,
+                debtTermSheetHigh.warrantCoverage,
+                '%',
+                true
+            ))}`,
+            `Warrant discount${styler(formatParameterRange(
+                debtTermSheetLow.warrantDiscount,
+                debtTermSheetHigh.warrantDiscount,
+                '%',
+                true
+            ))}`,
+            `Interest-only${styler(formatParameterRange(
+                debtTermSheetLow.interestOnlyPeriod,
+                debtTermSheetHigh.interestOnlyPeriod,
+                ' months'
+            ))}`, // Close the loop for radar chart
         ];
 
-        const values = [
-            sigmoidAdjusted(debtTermSheet.interestOnlyPeriod, 0, 24, 12, 10),
-            sigmoidAdjusted(debtTermSheet.straightAmortization, 12, 48, 30, 10),
-            sigmoidAdjusted(debtTermSheet.interestRate, 0.17, 0.09, 0.14, 10),
-            sigmoidAdjusted(debtTermSheet.arrangementFees, 0.04, 0, 0.02, 10),
-            sigmoidAdjusted(debtTermSheet.exitFees, 0.04, 0, 0.02, 10),
-            sigmoidAdjusted(debtTermSheet.warrantCoverage, 0.3, 0, 0.1, 6),
-            sigmoidAdjusted(debtTermSheet.warrantDiscount, 0.3, 0, 0.1, 6),
-            sigmoidAdjusted(debtTermSheet.interestOnlyPeriod, 0, 24, 12, 10),
+        const valuesHigh = [
+            sigmoidAdjusted(debtTermSheetHigh.interestOnlyPeriod, 0, 24, 12, 10),
+            sigmoidAdjusted(debtTermSheetHigh.straightAmortization, 12, 48, 30, 10),
+            sigmoidAdjusted(debtTermSheetHigh.interestRate, 0.17, 0.09, 0.14, 10),
+            sigmoidAdjusted(debtTermSheetHigh.arrangementFees, 0.04, 0, 0.02, 10),
+            sigmoidAdjusted(debtTermSheetHigh.exitFees, 0.04, 0, 0.02, 10),
+            sigmoidAdjusted(debtTermSheetHigh.warrantCoverage, 0.3, 0, 0.1, 6),
+            sigmoidAdjusted(debtTermSheetHigh.warrantDiscount, 0.3, 0, 0.1, 6),
+            sigmoidAdjusted(debtTermSheetHigh.interestOnlyPeriod, 0, 24, 12, 10),
         ];
 
-        const data = [{
+        const valuesLow = [
+            sigmoidAdjusted(debtTermSheetLow.interestOnlyPeriod, 0, 24, 12, 10),
+            sigmoidAdjusted(debtTermSheetLow.straightAmortization, 12, 48, 30, 10),
+            sigmoidAdjusted(debtTermSheetLow.interestRate, 0.17, 0.09, 0.14, 10),
+            sigmoidAdjusted(debtTermSheetLow.arrangementFees, 0.04, 0, 0.02, 10),
+            sigmoidAdjusted(debtTermSheetLow.exitFees, 0.04, 0, 0.02, 10),
+            sigmoidAdjusted(debtTermSheetLow.warrantCoverage, 0.3, 0, 0.1, 6),
+            sigmoidAdjusted(debtTermSheetLow.warrantDiscount, 0.3, 0, 0.1, 6),
+            sigmoidAdjusted(debtTermSheetLow.interestOnlyPeriod, 0, 24, 12, 10),
+        ];
+
+        // Create trace for high values
+        const traceHigh = {
             type: 'scatterpolar',
-            r: values,
+            r: valuesHigh,
             theta: categories,
-            fill: 'toself',
+            fill: 'tonext',
+            name: 'Best Terms',
             marker: {
-                line: {
-                    color: "#8434B4",
-                    width: 0
-                }
+                color: '#8434B4',
             },
             line: {
-                color: "#8434B4"
+                color: '#8434B4'
             },
             hoverinfo: 'none'
-        }];
+        };
+
+        // Create trace for low values
+        const traceLow = {
+            type: 'scatterpolar',
+            r: valuesLow,
+            theta: categories,
+            fill: 'toself',
+            name: 'Worst Terms',
+            marker: {
+                color: '#b55bc4',
+            },
+            line: {
+                color: '#b55bc4'
+            },
+            hoverinfo: 'none'
+        };
+
+        const data = [traceLow, traceHigh];
 
         const layout = {
-            // width: 400,
-            // height: 240,
-            // autosize: true,
             margin: { t: 40, r: 40, b: 40, l: 40 },
             polar: {
                 radialaxis: {
                     showgrid: true,
                     showticklabels: false,
                     ticks: '',
-                    showline: false,  // Remove radial axis line
+                    showline: false,
                     range: [0, 1],
                     fixedrange: true
                 },
@@ -1205,35 +1308,20 @@ document.addEventListener("DOMContentLoaded", function() {
                     showline: true,
                     tickfont: {
                         size: 12,
-                        color: 'Black'  // Custom font size and color for angular axis
+                        color: 'Black'
                     },
                     fixedrange: true
                 }
             },
-            dragmode:false,
-            modeBarButtonsToRemove: ['zoom2d', 'pan2d', 'select2d', 'lasso2d', 'zoomIn2d', 'zoomOut2d', 'autoScale2d', 'resetScale2d'],
+            dragmode: false,
+            showlegend: true,
+            legend: {
+                x: 0.1,
+                y: 1.1
+            },
             paper_bgcolor: 'rgba(0,0,0,0)',
             plot_bgcolor: 'rgba(0,0,0,0)',
-            annotations: [
-                {
-                    text: `<b>IRR: ${(debtTermSheet.irr * 100).toFixed(2)}%</b>`,
-                    xref: "paper", 
-                    yref: "paper",
-                    font: { size: 12 },
-                    x: 0.5,
-                    y: 0.5,
-                    showarrow: false
-                }
-            ]
         };
-
-        // Update layout for mobile
-        // const mediaQuery = window.matchMedia('(max-width: 767px)');
-        if (isMobilePortrait()) { 
-            layout.margin = { t: 30, b: 30, r: 30, l: 30 },
-            layout.polar.angularaxis.tickfont.size = 10;  // Smaller font size for mobile
-            layout.annotations[0].font.size = 10;  // Smaller annotation font size for mobile
-        }
 
         renderOrUpdatePlot('debt_radar_chart', data, layout);
     }
@@ -1268,8 +1356,8 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
-    function updateCharts(values, debtTermSheet) {
-        const { debtAmount, schedule, newRunway, isTaxDeductible } = debtTermSheet;
+    function updateCharts(values, debtTermSheetHigh, debtTermSheetLow) {
+        const { debtAmount, schedule, newRunway, isTaxDeductible } = debtTermSheetHigh;
         const { current_runway } = values;
         const { totalPaid, remainingBalance } = computeTotalPaidAndRemaining(schedule, 'totalCost', newRunway);
     
@@ -1280,7 +1368,7 @@ document.addEventListener("DOMContentLoaded", function() {
             newOwnershipEquity,
             retainedValuesDebt,
             retainedValuesEquity
-        } = computeValuationMetrics(values, debtTermSheet, 6);
+        } = computeValuationMetrics(values, debtTermSheetHigh, 6);
     
         // Update elements applicable to all scenarios
         // Update cards value
@@ -1288,7 +1376,7 @@ document.addEventListener("DOMContentLoaded", function() {
         document.getElementById('retainedOwnership').textContent = formatToPercentage(newOwnershipDebt - newOwnershipEquity);
     
         // Update charts
-        chartDebtRatingRadar(debtTermSheet);
+        chartDebtRatingRadar(debtTermSheetHigh, debtTermSheetLow);
         chartYearlyPayments(schedule, isTaxDeductible);
 
         // Update elements applicable to non-profitable businesses
@@ -1303,7 +1391,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
 
         if (isProfitableCompany) {
-            document.getElementById('afterTaxCostOfDebt').textContent = formatToPercentage(debtTermSheet.afterTaxCostOfDebt);
+            document.getElementById('afterTaxCostOfDebt').textContent = formatToPercentage(debtTermSheetHigh.afterTaxCostOfDebt);
         }
     }
 
@@ -1337,20 +1425,25 @@ document.addEventListener("DOMContentLoaded", function() {
         isNearProfitableCompany = isProfitableCompany
 
         // Compute debt informations
-        const debtTermSheet = createDebtTermSheet(values);
+        const debtTermSheetHigh = createDebtTermSheet(values);
+        const debtTermSheetLow = createDebtTermSheet(values, -0.2);
 
-        // Show analysis if and only if all values are filled
-        if (hasNullValues(values) || debtTermSheet.debtAmount === 0) {
+        // Show analysis if and only if the debt estimated is positive
+        if (debtTermSheetHigh.debtAmount <= 0) {
             hideElement('result-container');
             return;
         }
 
-        // Add event listener to debt input alert
-        triggerDebtAlert(values.current_debt, debtTermSheet.debtAmount);
+        // Display warning if amount to raise exceeds maximum
+        if (debtTermSheetHigh.amountToRaiseExceeded) {
+            showElement('debt-exceeded-container');
+        } else {
+            hideElement('debt-exceeded-container');
+        }
 
         // Generate / update charts and display
         showElement('result-container');
-        updateCharts(values, debtTermSheet);
+        updateCharts(values, debtTermSheetHigh, debtTermSheetLow);
         
     }
 
@@ -1396,9 +1489,97 @@ document.addEventListener("DOMContentLoaded", function() {
             updateResults();
         });
     });
-    // const klymbAdvisory = document.getElementById('klymb_advisory_service');
-    // klymbAdvisory.addEventListener('change', updateResults);
+    
+    //////////////////
+    // Email Modal Logic
+    //////////////////
 
-    // Initial capture on page load
-    updateResults();
+    const emailModal = document.getElementById('email-modal');
+    const modalCloseButton = document.getElementById('modal-close-button');
+    const emailSubmitButton = document.getElementById('email-submit-button');
+    const emailInput = document.getElementById('email-input');
+    const resultContainer = document.getElementById('result-container');
+
+    // Variable to track if modal has been dismissed
+    let modalDismissed = false;
+
+    // Function to check if email is saved in cookie
+    function getEmailFromCookie() {
+        const name = "userEmail=";
+        const decodedCookie = decodeURIComponent(document.cookie);
+        const ca = decodedCookie.split(';');
+        for(let i = 0; i < ca.length; i++) {
+            let c = ca[i].trim();
+            if (c.indexOf(name) === 0) {
+                return c.substring(name.length, c.length);
+            }
+        }
+        return null;
+    }
+
+    // Function to set email in cookie
+    function setEmailCookie(email) {
+        const d = new Date();
+        d.setTime(d.getTime() + (365*24*60*60*1000)); // Expires in 1 year
+        const expires = "expires="+ d.toUTCString();
+        document.cookie = "userEmail=" + email + ";" + expires + ";path=/";
+    }
+
+    // Function to show the modal
+    function showEmailModal() {
+        emailModal.style.display = 'block';
+        resultContainer.classList.add('blur');
+    }
+
+    // Function to hide the modal and remove blur
+    function hideEmailModal() {
+        emailModal.style.display = 'none';
+        resultContainer.classList.remove('blur');
+    }
+
+    // Check if email is already saved
+    let savedEmail = getEmailFromCookie();
+
+    // Event listener for close button
+    modalCloseButton.addEventListener('click', function() {
+        hideEmailModal();
+        modalDismissed = true; // Update the flag
+    });
+
+    // Event listener for submit button
+    emailSubmitButton.addEventListener('click', function() {
+        const email = emailInput.value.trim();
+        if (email) {
+            // Simple email validation
+            if (validateEmail(email)) {
+                setEmailCookie(email);
+                savedEmail = email;
+                hideEmailModal();
+                modalDismissed = true; // Update the flag
+            } else {
+                emailInput.classList.add('input-error');
+            }
+        } else {
+            emailInput.classList.add('input-error');
+        }
+    });
+
+    // Function to validate email format
+    function validateEmail(email) {
+        // Basic email regex pattern
+        const re = /\S+@\S+\.\S+/;
+        return re.test(email);
+    }
+
+    // Modify updateResults function to show modal after results are displayed
+    const originalUpdateResults = updateResults;
+    updateResults = function() {
+        originalUpdateResults.apply(this, arguments);
+        if (!savedEmail && !modalDismissed && document.getElementById('result-container').classList.contains('show')) {
+            showEmailModal();
+        }
+    };
+
+// // Initial capture on page load
+// updateResults();
 });
