@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debt Simulator for SaaS Founders</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+    <style>
+        .result-container {
+            opacity: 0;
+            max-height: 0;
+            transform: translateY(20px); /* Move down 20px initially */
+            overflow: hidden;
+            transition: opacity 5s ease, max-height 0.5s ease, transform 5s ease;
+        }
+        .result-container.show {
+            opacity: 1;
+            max-height: 1000px; /* Adjust to a large enough value to accommodate your content */
+            transform: translateY(0); /* Move back to original position */
+        }
+        .warning-container {
+            background-color: #ffaaaa;
+            border: 2px solid #ffcaca;
+            border-radius: 10px;
+            /* padding: 20px; */
+            width: 99%;
+            text-align: center;
+            color: #ffffff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            display: none;
+        }
+        .warning-container.show {
+            display: block;
+        }
+        .input-error {
+            border-color: red !important;
+        }
+        .cards-container {
+            display: flex;
+            justify-content: space-around;
+            width: 80%;
+        }
+        .card {
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 20px;
+            width: 200px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            display: none;
+        }
+        .card.show {
+            display: block;
+        }
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+        .card-title {
+            font-size: 16px;
+            color: #777;
+            margin-bottom: 10px;
+        }
+        .card-value {
+            font-size: 32px;
+            color: #333;
+        }
+        .chart-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            max-width: 100%;
+        }
+        .chart {
+            width: 45%;
+            min-width: 300px;
+            box-sizing: content-box;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            flex: 0 auto;
+            min-height: 400px;
+            margin: 0 3px 20px;
+            padding-top: 0;
+            padding-bottom: 0;
+            box-shadow: 1px 3px 8px rgba(0,0,0,0.1);
+            display: none;
+        }
+        .chart.show {
+            display: block;
+        }
+
+        /* Pictogram styling */
+        .tooltip-icon {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        /* Tooltip text styling */
+        .tooltip-text {
+            display: none;
+            position: absolute;
+            top: 35px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            z-index: 10;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            z-index: 1000; /* Sit on top of other content */
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.5); /* Black background with opacity */
+        }
+
+        .modal-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            backdrop-filter: blur(2px); /* Adjust the blur intensity */
+            -webkit-backdrop-filter: blur(2px); /* Safari support */
+            background-color: rgba(0, 0, 0, 0.3); /* Optional dark translucent layer */
+            z-index: 98; /* Ensure it's above all other elements */
+        }
+
+        /* Modal Content */
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto; /* Center vertically */
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 400px;
+            position: relative;
+            border-radius: 10px;
+            z-index: 99;
+        }
+
+        /* Close Button */
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            position: absolute;
+            right: 10px;
+            top: 5px;
+            cursor: pointer;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* Adjust z-index of result-container */
+        #result-container {
+            position: relative;
+            z-index: 1;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Debt simulator for SaaS founders</h1>
+        <p>Are you eligible to raise debt and boost your valuation without any dilution?</p>
+        <hr>
+        <h2>Get your debt estimate</h2>
+        <p>What value can a standard market debt offer add to your venture?</p>
+        
+        <form>
+            <div class="form-group">
+                <label for="amount_to_raise">Amount to raise (optional)</label>
+                <input type="text" id="amount_to_raise" name="amount_to_raise" placeholder="-" class="number-input">
+            </div>
+            <div class="form-group">
+                <label for="arr">ARR</label>
+                <input type="text" id="arr" name="arr" placeholder="10,000,000" class="number-input">
+            </div>
+            <div class="form-group">
+                <label for="revenue_growth">Revenue Growth (% yearly)</label>
+                <input type="text" id="revenue_growth" name="revenue_growth" placeholder="50%" class="percentage-input">
+            </div>
+            <div class="form-group">
+                <label for="gross_margin">Gross Margin</label>
+                <input type="text" id="gross_margin" name="gross_margin" placeholder="70%" class="percentage-input">
+            </div>
+            <div class="form-group">
+                <label for="cash_burn">Cash Burn</label>
+                <input type="text" id="cash_burn" name="cash_burn" placeholder="500,000" class="number-input">
+            </div>
+            <div class="form-group">
+                <label for="current_runway">Current Runway (months)</label>
+                <input type="text" id="current_runway" name="current_runway" placeholder="12" class="number-input">
+            </div>
+            <div class="form-group">
+                <label for="current_valuation">Current Valuation</label>
+                <input type="text" id="current_valuation" name="current_valuation" placeholder="50,000,000" class="number-input">
+            </div>
+            <div class="form-group">
+                <label for="current_ownership">Current Ownership</label>
+                <input type="text" id="current_ownership" name="current_ownership" placeholder="70%" class="percentage-input">
+            </div>
+            <!-- <div class="form-group">
+                <label for="klymb_advisory_service">Klymb Advisory Service</label>
+                <select id="klymb_advisory_service" name="klymb_advisory_service">
+                    <option value="No" selected>No</option>
+                    <option value="Yes">Yes</option>
+                </select>
+            </div> -->
+        </form>
+
+        <div class="warning-container" id="runway-container">
+            <p>You do not have 12 months of runway. We recommend you to raise additional equity to qualify venture debt investors' requirement.</p>
+        </div>
+        <div class="warning-container" id="debt-exceeded-container">
+            <p>You are trying to raise more than what our model estimates to be achievable based on the information we currently have. Please contact us for a more detailed analysis.</p>
+        </div>
+        <div class="warning-container" id="arr-container">
+            <p>ARR Alert.</p>
+        </div>
+        <div class="warning-container" id="growth-container">
+            <p>As you are a late stage business venture debt is not the best for you. Contact us below to estimate your financing potential.</p>
+        </div>
+        <div class="warning-container" id="near-profitability-container">
+            <p>As you near or have reached profitability, venture debt may not be the best option. Contact us below to estimate your financing potential.</p>
+        </div>
+
+    </div>
+
+    <div class="result-container" id="result-container">
+        <div class="cards-container">
+            <div class="card show">
+                <div class="card-title">Target Amount</div>
+                <div id="amountRaised" class="card-value"></div>
+            </div>
+            <div class="card">
+                <div class="card-title">Additional Runway</div>
+                <div id="additionalRunway" class="card-value"></div>
+            </div>
+            <div class="card">
+                <div class="card-title">Increased Valuation</div>
+                <div id="increasedValuation" class="card-value"></div>
+            </div>
+            <div class="card show">
+                <div class="card-title">Preserved Ownership</div>
+                <div id="retainedOwnership" class="card-value"></div>
+            </div>
+            <div class="card show">
+                <div class="card-title">Number of Investors</div>
+                <div id="numberInvestors" class="card-value"></div>
+            </div>
+            <div class="card">
+                <div class="card-title">After-Tax Cost of Debt</div>
+                <div id="afterTaxCostOfDebt" class="card-value"></div>
+            </div>
+        </div>
+    
+        <h2>Financial Overview Chart</h2>
+        <div id="chart-container" class="chart-container">
+            <div class="chart show" id="debt_radar_chart"></div>
+            <div class="chart show" id="cost_comparison_chart"></div>
+            <!-- <div class="chart show" id="retained_valuation_gap_chart"></div> -->
+            <div class="chart show" id="payment_schedule_chart"></div>
+            <div class="chart show" id="cashflow_evolution_chart"></div>
+        </div>
+    </div>
+
+    <!-- <script src="https://yohanklymb.github.io/venture-debt-simulator-public/js/main.min.js"></script> -->
+    <script src="js/main.js"></script>
+
+    <!-- Email Modal -->
+    <div id="email-modal" class="modal">
+        <div class="modal-background"></div>
+        <div class="modal-content">
+            <span id="modal-close-button" class="close">&times;</span>
+            <div class="card show">
+                <div class="card-title">Target Amount</div>
+                <div id="modalTargetAmount" class="card-value"></div>
+            </div>
+            <div class="card show">
+                <div class="card-title">Number of Investors</div>
+                <div id="modalNumberInvestors" class="card-value"></div>
+            </div>
+            <h2>Get Your Full Report</h2>
+            <p>Enter your email to access the detailed analysis.</p>
+            <input type="email" id="email-input" placeholder="Enter your email" required>
+            <button id="email-submit-button">Submit</button>
+        </div>
+    </div>
+</body>
+</html>
