@@ -5,6 +5,9 @@ on:
     branches:
       - dev
 
+permissions:
+  contents: write  # Ensure the GITHUB_TOKEN has write access
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
