@@ -11,6 +11,56 @@ document.addEventListener("DOMContentLoaded", function() {
     const corporateTaxRate = 0.25 // 25% assumed for European countries
     const arrThreshold = 1000000;
 
+    const investorsList = [
+        { investorId: 1, minAmount: 5000000, maxAmount: 100000000 },
+        { investorId: 2, minAmount: 15000000, maxAmount: 250000000 },
+        { investorId: 3, minAmount: 10000000, maxAmount: 60000000 },
+        { investorId: 4, minAmount: 2000000, maxAmount: 50000000 },
+        { investorId: 5, minAmount: 7000000, maxAmount: 50000000 },
+        { investorId: 6, minAmount: 1000000, maxAmount: 10000000 },
+        { investorId: 7, minAmount: 2000000, maxAmount: 15000000 },
+        { investorId: 8, minAmount: 2000000, maxAmount: 10000000 },
+        { investorId: 9, minAmount: 5000000, maxAmount: 25000000 },
+        { investorId: 10, minAmount: 10000000, maxAmount: 200000000 },
+        { investorId: 11, minAmount: 5000000, maxAmount: 15000000 },
+        { investorId: 12, minAmount: 5000000, maxAmount: 20000000 },
+        { investorId: 13, minAmount: 5000000, maxAmount: 250000000 },
+        { investorId: 14, minAmount: 500000000, maxAmount: 5000000 },
+        { investorId: 15, minAmount: 1000000, maxAmount: 10000000 },
+        { investorId: 16, minAmount: 2000000, maxAmount: 6000000 },
+        { investorId: 17, minAmount: 2000000, maxAmount: 20000000 },
+        { investorId: 18, minAmount: 2000000, maxAmount: 15000000 },
+        { investorId: 19, minAmount: 5000000, maxAmount: 100000000 },
+        { investorId: 20, minAmount: 5000000, maxAmount: 75000000 },
+        { investorId: 21, minAmount: 1000000, maxAmount: 15000000 },
+        { investorId: 22, minAmount: 3000000, maxAmount: 50000000 },
+        { investorId: 23, minAmount: 1000000, maxAmount: 10000000 },
+        { investorId: 24, minAmount: 100000000, maxAmount: 10000000 },
+        { investorId: 25, minAmount: 1000000, maxAmount: 10000000 },
+        { investorId: 26, minAmount: 1000000, maxAmount: 5000000 },
+        { investorId: 27, minAmount: 1000000, maxAmount: 5000000 },
+        { investorId: 28, minAmount: 20000000, maxAmount: 100000000 },
+        { investorId: 29, minAmount: 5000000, maxAmount: 15000000 },
+        { investorId: 30, minAmount: 50000000, maxAmount: 150000000 },
+        { investorId: 31, minAmount: 20000000, maxAmount: 100000000 },
+        { investorId: 32, minAmount: 2000000, maxAmount: 10000000 },
+        { investorId: 33, minAmount: 10000000, maxAmount: 10000000 },
+        { investorId: 34, minAmount: 1000000, maxAmount: 5000000 },
+        { investorId: 35, minAmount: 3000000, maxAmount: 20000000 },
+        { investorId: 36, minAmount: 5000000, maxAmount: 50000000 },
+        { investorId: 37, minAmount: 500000000, maxAmount: 2000000 },
+        { investorId: 38, minAmount: 200000000, maxAmount: 2000000 },
+        { investorId: 39, minAmount: 500000000, maxAmount: 3000000 },
+        { investorId: 40, minAmount: 2000000, maxAmount: 25000000 },
+        { investorId: 41, minAmount: 100000000, maxAmount: 3000000 },
+        { investorId: 42, minAmount: 50000000, maxAmount: 200000000 },
+        { investorId: 43, minAmount: 10000000, maxAmount: 50000000 },
+        { investorId: 44, minAmount: 5000000, maxAmount: 75000000 },
+        { investorId: 45, minAmount: 10000000, maxAmount: 50000000 },
+        { investorId: 46, minAmount: 500000000, maxAmount: 4000000 }
+    ];
+    
+
     // Function to format the input value as currency
     function formatCurrencyInputOnBlur(event) {
         const input = event.target;
@@ -133,15 +183,6 @@ document.addEventListener("DOMContentLoaded", function() {
     // Validate inputs
     //////////////////
 
-    function hasNullValues(values) {
-        for (const key in values) {
-            if (values[key] === null) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     function isInputValid(input) {
         let value = input.value;
     
@@ -198,15 +239,18 @@ document.addEventListener("DOMContentLoaded", function() {
             hideElement('additionalRunway', focusParent=true);
             hideElement('increasedValuation', focusParent=true);
             hideElement('cost_comparison_chart');
-            hideElement('retained_valuation_gap_chart');
+            // hideElement('retained_valuation_gap_chart');
+            hideElement('cashflow_evolution_chart');
             hideElement('afterTaxCostOfDebt', focusParent=true);
             isHighRunway = true
         } else {
+            console.log('here')
             isNearProfitableCompany = false;
             showElement('additionalRunway', focusParent=true);
             showElement('increasedValuation', focusParent=true);
             showElement('cost_comparison_chart');
-            showElement('retained_valuation_gap_chart');
+            // showElement('retained_valuation_gap_chart');
+            showElement('cashflow_evolution_chart');
             hideElement('afterTaxCostOfDebt', focusParent=true);
         }
 
@@ -888,6 +932,49 @@ document.addEventListener("DOMContentLoaded", function() {
         return value.toLocaleString('en-US', { maximumFractionDigits: nbDecimal });
     }
 
+    function computeNumberOfInvestors(targetAmount, cashBurn) {
+        let numberOfInvestors = 0;
+
+        // Ensure targetAmount is a number
+        targetAmount = parseFloat(targetAmount);
+        if (isNaN(targetAmount) || targetAmount <= 0) {
+            throw new Error('Invalid amount to raise. It must be a positive number.');
+        }
+
+        // Ensure cashBurn is a number
+        cashBurn = parseFloat(cashBurn);
+        if (isNaN(cashBurn)) {
+            throw new Error('Invalid cash burn.');
+        }
+
+        // Increment numberOfInvestors with growth lenders depending on profitability
+        const profitability = -12 * cashBurn;
+        // Use switch statement for cumulative increments
+        switch (true) {
+            case (profitability > 1000000):
+                numberOfInvestors += 5;
+            // No break; execution falls through to the next case
+            case (profitability > 3000000):
+                numberOfInvestors += 10;
+            // No break; execution falls through
+            case (profitability > 5000000):
+                numberOfInvestors += 16;
+                break; // Optional, since it's the last case
+            default:
+                // Do nothing if none of the conditions are met
+        }
+    
+        // Filter investors whose minAmount <= targetAmount <= maxAmount
+        const matchingInvestors = investorsList.filter(investor => 
+            targetAmount >= investor.minAmount && targetAmount <= investor.maxAmount
+        );
+    
+        // The number of matching investors
+        numberOfInvestors += matchingInvestors.length;
+    
+        return numberOfInvestors
+    }
+
     ////////////////////
     // Charts generation
     ////////////////////
@@ -998,7 +1085,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 zeroline: false,  // Hide y-axis zero line
                 showline: false,  // Hide y-axis line
                 showticklabels: true,  // Show y-axis labels
-                title: 'Amount (€)',
+                title: 'Amount',
                 fixedrange: true  // Disable zoom for x-axis
             },
             hovermode: 'closest',
@@ -1154,7 +1241,7 @@ document.addEventListener("DOMContentLoaded", function() {
             title: 'Yearly loan amortization forecast',
             barmode: 'relative',
             xaxis: { fixedrange: true },
-            yaxis: { title: 'Amount (€)', fixedrange: true },
+            yaxis: { title: 'Amount', fixedrange: true },
             showlegend: false,
             hovermode: 'closest',
             plot_bgcolor: 'rgba(0,0,0,0)',  // Transparent plot background
@@ -1326,6 +1413,116 @@ document.addEventListener("DOMContentLoaded", function() {
         renderOrUpdatePlot('debt_radar_chart', data, layout);
     }
 
+    function chartCashFlowsEvolution(values, debtTermSheet) {
+        const { current_runway, cash_burn } = values;
+        const { debtAmount, schedule } = debtTermSheet;
+    
+        // Ensure cash_burn is positive when burning cash
+        const cashBurnMonthly = cash_burn; // Positive value for cash outflow
+        const initialCash = current_runway * cashBurnMonthly;
+    
+        // Compute cash balances without debt
+        const cashBalanceWithoutDebt = [];
+        let cashBalanceNoDebt = initialCash;
+        let monthNoDebt = 0;
+    
+        while (cashBalanceNoDebt >= 0) {
+            cashBalanceWithoutDebt.push({
+                month: monthNoDebt,
+                cashBalance: cashBalanceNoDebt,
+            });
+            cashBalanceNoDebt -= cashBurnMonthly; // Subtract cash burn
+            monthNoDebt += 1;
+        }
+        // Add the final negative cash balance to cross zero
+        // Calculate fractional month where cash balance reaches zero
+        const lastPositiveCashBalance = cashBalanceNoDebt + cashBurnMonthly;
+        const deltaCash = lastPositiveCashBalance;
+        const deltaMonth = deltaCash / cashBurnMonthly;
+        const exactZeroMonth = monthNoDebt - 1 + deltaMonth;
+        cashBalanceWithoutDebt.push({
+            month: exactZeroMonth,
+            cashBalance: 0,
+        });
+    
+        // Compute cash balances with debt
+        const debtPayments = schedule.map(payment => payment.totalPayment);
+        const cashBalanceWithDebt = [];
+        let cashBalanceDebt = initialCash + debtAmount; // Add debt amount to initial cash
+        let monthWithDebt = 0;
+    
+        while (cashBalanceDebt > 0) {
+            const payment = debtPayments[monthWithDebt] || 0;
+            cashBalanceWithDebt.push({
+                month: monthWithDebt,
+                cashBalance: cashBalanceDebt,
+            });
+            cashBalanceDebt -= (cashBurnMonthly + payment); // Subtract cash burn and loan payment
+            monthWithDebt += 1;
+        }
+        // Add the final negative cash balance to cross zero
+        const lastPositiveCashBalanceDebt = cashBalanceDebt + cashBurnMonthly + (debtPayments[monthWithDebt - 1] || 0);
+        const totalOutflow = cashBurnMonthly + (debtPayments[monthWithDebt - 1] || 0);
+        const deltaMonthDebt = lastPositiveCashBalanceDebt / totalOutflow;
+        const exactZeroMonthDebt = monthWithDebt - 1 + deltaMonthDebt;
+        cashBalanceWithDebt.push({
+            month: exactZeroMonthDebt,
+            cashBalance: 0,
+        });
+    
+        // Prepare data for Plotly
+        const monthsNoDebt = cashBalanceWithoutDebt.map(point => point.month);
+        const cashBalancesNoDebt = cashBalanceWithoutDebt.map(point => point.cashBalance);
+    
+        const monthsWithDebt = cashBalanceWithDebt.map(point => point.month);
+        const cashBalancesWithDebt = cashBalanceWithDebt.map(point => point.cashBalance);
+
+        // Create custom data arrays with rounded-up months
+        const hoverMonthsNoDebt = monthsNoDebt.map(month => Math.ceil(month));
+        const hoverMonthsWithDebt = monthsWithDebt.map(month => Math.ceil(month));
+    
+        const traceNoDebt = {
+            x: monthsNoDebt,
+            y: cashBalancesNoDebt,
+            mode: 'lines',
+            name: 'Without Debt',
+            line: { color: '#b55bc4', width: 3 },
+            customdata: hoverMonthsNoDebt,
+            hovertemplate: 'Month %{customdata}<br>Cash balance: %{y:,.3s}<extra></extra>',
+        };
+    
+        const traceWithDebt = {
+            x: monthsWithDebt,
+            y: cashBalancesWithDebt,
+            mode: 'lines',
+            name: 'With Debt',
+            line: { color: '#8434B4', width: 3 },
+            customdata: hoverMonthsWithDebt,
+            hovertemplate: 'Month %{customdata}<br>Cash balance: %{y:,.3s}<extra></extra>',
+        };
+    
+        const data = [traceNoDebt, traceWithDebt];
+    
+        // Adjust the x-axis range
+        const xMax = Math.max(
+            monthsNoDebt[monthsNoDebt.length - 1],
+            monthsWithDebt[monthsWithDebt.length - 1]
+        );
+    
+        const layout = {
+            title: 'Cash Balance Forecast',
+            xaxis: { title: 'Months', range: [0, xMax + 1], fixedrange: true },
+            yaxis: { title: 'Cash Balance', range: [0, null], fixedrange: true },
+            legend: { x: 0.1, y: 1.1 },
+            hovermode: 'closest',
+            plot_bgcolor: 'rgba(0,0,0,0)',  // Transparent plot background
+            paper_bgcolor: 'rgba(0,0,0,0)',  // Transparent paper background
+        };
+    
+        renderOrUpdatePlot('cashflow_evolution_chart', data, layout);
+    }
+    
+
     function showElement(elementId, focusParent = false) {
         const element = document.getElementById(elementId);
         
@@ -1358,8 +1555,10 @@ document.addEventListener("DOMContentLoaded", function() {
 
     function updateCharts(values, debtTermSheetHigh, debtTermSheetLow) {
         const { debtAmount, schedule, newRunway, isTaxDeductible } = debtTermSheetHigh;
-        const { current_runway } = values;
+        const { current_runway, cash_burn } = values;
         const { totalPaid, remainingBalance } = computeTotalPaidAndRemaining(schedule, 'totalCost', newRunway);
+
+        const numberOfInvestors = computeNumberOfInvestors(debtAmount, cash_burn);
     
         const {
             valuationsDebt,
@@ -1374,6 +1573,11 @@ document.addEventListener("DOMContentLoaded", function() {
         // Update cards value
         document.getElementById('amountRaised').textContent = formatToCurrency(debtAmount);
         document.getElementById('retainedOwnership').textContent = formatToPercentage(newOwnershipDebt - newOwnershipEquity);
+        document.getElementById('numberInvestors').textContent = numberOfInvestors;
+
+        // Update modal cards value
+        document.getElementById('modalTargetAmount').textContent = formatToCurrency(debtAmount);
+        document.getElementById('modalNumberInvestors').textContent = numberOfInvestors;
     
         // Update charts
         chartDebtRatingRadar(debtTermSheetHigh, debtTermSheetLow);
@@ -1387,7 +1591,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
             // Update charts
             chartCostComparison(totalPaid, remainingBalance, retainedValuesDebt, retainedValuesEquity);
-            chartRetainedValue(retainedValuesDebt, retainedValuesEquity, current_runway);
+            // chartRetainedValue(retainedValuesDebt, retainedValuesEquity, current_runway);
+            chartCashFlowsEvolution(values, debtTermSheetHigh);
         }
 
         if (isProfitableCompany) {
@@ -1498,7 +1703,6 @@ document.addEventListener("DOMContentLoaded", function() {
     const modalCloseButton = document.getElementById('modal-close-button');
     const emailSubmitButton = document.getElementById('email-submit-button');
     const emailInput = document.getElementById('email-input');
-    const resultContainer = document.getElementById('result-container');
 
     // Variable to track if modal has been dismissed
     let modalDismissed = false;
@@ -1528,13 +1732,11 @@ document.addEventListener("DOMContentLoaded", function() {
     // Function to show the modal
     function showEmailModal() {
         emailModal.style.display = 'block';
-        resultContainer.classList.add('blur');
     }
 
     // Function to hide the modal and remove blur
     function hideEmailModal() {
         emailModal.style.display = 'none';
-        resultContainer.classList.remove('blur');
     }
 
     // Check if email is already saved
@@ -1580,6 +1782,4 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     };
 
-// // Initial capture on page load
-// updateResults();
 });
