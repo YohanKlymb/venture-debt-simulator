@@ -1724,8 +1724,10 @@ inputs.forEach(input => {
         updateResults()
     });
     input.addEventListener('keydown', (event) => {
-        isEditing = false;
-        updateResults();
+        if (event.key === 'Enter') {
+            isEditing = false;
+            updateResults();
+        }
     });
 });
 
