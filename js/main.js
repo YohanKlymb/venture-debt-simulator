@@ -1531,13 +1531,13 @@ function chartCashFlowsEvolution(values, debtTermSheet) {
             fixedrange: true,
             showgrid: false,
             showline: true,
+            zeroline: false,
         },
         yaxis: { 
             title: 'Cash Balance (€)', 
             range: [0, null], 
             fixedrange: true,
-            showgrid: false,
-            showline: false,
+            showgrid: true,
         },
         legend: {
             x: 0.5,
