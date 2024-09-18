@@ -988,7 +988,7 @@ function renderOrUpdatePlot(chartId, data, layout, onlyRender=false) {
 
     // Adjust layout
     if (! ("margin" in layout)) {
-        layout.margin = {r: 30, b:30, l:30, t:30};
+        layout.margin = {r: 30, b:30, t:50};
     }
 
     Plotly.newPlot(chartId, data, layout, config)//.then(adjustClipPaths);
@@ -1401,8 +1401,13 @@ function chartDebtRatingRadar(debtTermSheetHigh, debtTermSheetLow) {
         dragmode: false,
         showlegend: true,
         legend: {
-            x: 0.1,
-            y: 1.1
+            x: 0.5,
+            y: -0.2,
+            orientation: 'h',
+            xanchor: 'center',
+            font: {
+                size: 10
+            }
         },
         paper_bgcolor: 'rgba(0,0,0,0)',
         plot_bgcolor: 'rgba(0,0,0,0)',
@@ -1413,15 +1418,6 @@ function chartDebtRatingRadar(debtTermSheetHigh, debtTermSheetLow) {
     if (screenWidth <= 800) {
         layout.margin = { t: 40, r: 60, b: 40, l: 60 };
         layout.polar.angularaxis.tickfont.size = 10; // Reduce font size
-        layout.legend = {
-            x: 0.5,
-            y: -0.2,
-            orientation: 'h',
-            xanchor: 'center',
-            font: {
-                size: 10
-            }
-        };
     }
 
     renderOrUpdatePlot('debt_radar_chart', data, layout);
