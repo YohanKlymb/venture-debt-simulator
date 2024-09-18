@@ -988,7 +988,7 @@ function renderOrUpdatePlot(chartId, data, layout, onlyRender=false) {
 
     // Adjust layout
     if (! ("margin" in layout)) {
-        layout.margin = {r: 30, b:30};
+        layout.margin = {r: 30, b:30, l:30, t:30};
     }
 
     Plotly.newPlot(chartId, data, layout, config)//.then(adjustClipPaths);
