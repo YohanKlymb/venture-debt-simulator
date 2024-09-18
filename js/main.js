@@ -990,9 +990,9 @@ function renderOrUpdatePlot(chartId, data, layout, onlyRender=false) {
     if (! ("margin" in layout)) {
         const screenWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
         if (screenWidth <= 800) {
-            layout.margin = {r: 30, b:30, t: 60};
+            layout.margin = {r: 30, b:30, t: 70};
         } else {
-            layout.margin = {r: 30, b:30, t: 40};
+            layout.margin = {r: 30, b:30, t: 60};
         }        
     }
 
@@ -1530,7 +1530,7 @@ function chartCashFlowsEvolution(values, debtTermSheet) {
         yaxis: { title: 'Cash Balance (€)', range: [0, null], fixedrange: true },
         legend: {
             x: 0.5,
-            y: -0.2,
+            y: 0,
             orientation: 'h',
             xanchor: 'center',
             font: {
