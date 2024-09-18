@@ -986,9 +986,14 @@ function renderOrUpdatePlot(chartId, data, layout, onlyRender=false) {
         responsive: true
         };
 
-    // Adjust layout
+    // Adjust layout margin for large and small screens
     if (! ("margin" in layout)) {
-        layout.margin = {r: 30, b:30, t: 50};
+        const screenWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+        if (screenWidth <= 800) {
+            layout.margin = {r: 30, b:30, t: 60};
+        } else {
+            layout.margin = {r: 30, b:30, t: 40};
+        }        
     }
 
     Plotly.newPlot(chartId, data, layout, config)//.then(adjustClipPaths);
