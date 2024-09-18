@@ -1527,7 +1527,15 @@ function chartCashFlowsEvolution(values, debtTermSheet) {
         title: 'Cash Balance Forecast',
         xaxis: { range: [0, xMax + 1], fixedrange: true },
         yaxis: { title: 'Cash Balance (€)', range: [0, null], fixedrange: true },
-        legend: { x: 0.1, y: 1.1 },
+        legend: {
+            x: 0.5,
+            y: -0.2,
+            orientation: 'h',
+            xanchor: 'center',
+            font: {
+                size: 10
+            }
+        },
         hovermode: 'closest',
         plot_bgcolor: 'rgba(0,0,0,0)',  // Transparent plot background
         paper_bgcolor: 'rgba(0,0,0,0)',  // Transparent paper background
