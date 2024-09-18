@@ -1526,11 +1526,22 @@ function chartCashFlowsEvolution(values, debtTermSheet) {
 
     const layout = {
         title: 'Cash Balance Forecast',
-        xaxis: { range: [0, xMax + 1], fixedrange: true },
-        yaxis: { title: 'Cash Balance (€)', range: [0, null], fixedrange: true },
+        xaxis: { 
+            range: [0, xMax + 1], 
+            fixedrange: true,
+            showgrid: false,
+            showline: true,
+        },
+        yaxis: { 
+            title: 'Cash Balance (€)', 
+            range: [0, null], 
+            fixedrange: true,
+            showgrid: false,
+            showline: false,
+        },
         legend: {
             x: 0.5,
-            y: 0,
+            y: -0.1,
             orientation: 'h',
             xanchor: 'center',
             font: {
