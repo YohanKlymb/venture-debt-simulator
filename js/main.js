@@ -1083,7 +1083,7 @@ function chartCostComparison(totalPaid, remainingBalance, retainedValuesDebt, re
             zeroline: false,  // Hide y-axis zero line
             showline: false,  // Hide y-axis line
             showticklabels: true,  // Show y-axis labels
-            title: 'Amount',
+            title: 'Amount (€)',
             fixedrange: true  // Disable zoom for x-axis
         },
         hovermode: 'closest',
@@ -1239,7 +1239,7 @@ function chartYearlyPayments(schedule, isTaxDeductible=false) {
         title: 'Yearly loan amortization forecast',
         barmode: 'relative',
         xaxis: { fixedrange: true },
-        yaxis: { title: 'Amount', fixedrange: true },
+        yaxis: { title: 'Amount (€)', fixedrange: true },
         showlegend: false,
         hovermode: 'closest',
         plot_bgcolor: 'rgba(0,0,0,0)',  // Transparent plot background
@@ -1408,6 +1408,22 @@ function chartDebtRatingRadar(debtTermSheetHigh, debtTermSheetLow) {
         plot_bgcolor: 'rgba(0,0,0,0)',
     };
 
+    // Adjust layout for small screens
+    const screenWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+    if (screenWidth <= 800) {
+        layout.margin = { t: 40, r: 60, b: 40, l: 60 };
+        layout.polar.angularaxis.tickfont.size = 10; // Reduce font size
+        layout.legend = {
+            x: 0.5,
+            y: -0.2,
+            orientation: 'h',
+            xanchor: 'center',
+            font: {
+                size: 10
+            }
+        };
+    }
+
     renderOrUpdatePlot('debt_radar_chart', data, layout);
 }
 
@@ -1509,8 +1525,8 @@ function chartCashFlowsEvolution(values, debtTermSheet) {
 
     const layout = {
         title: 'Cash Balance Forecast',
-        xaxis: { title: 'Months', range: [0, xMax + 1], fixedrange: true },
-        yaxis: { title: 'Cash Balance', range: [0, null], fixedrange: true },
+        xaxis: { range: [0, xMax + 1], fixedrange: true },
+        yaxis: { title: 'Cash Balance (€)', range: [0, null], fixedrange: true },
         legend: { x: 0.1, y: 1.1 },
         hovermode: 'closest',
         plot_bgcolor: 'rgba(0,0,0,0)',  // Transparent plot background
