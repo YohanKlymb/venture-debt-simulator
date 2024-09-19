@@ -118,7 +118,68 @@
             z-index: 10;
         }
 
-        /* TODO: Add tooltip support */
+        /* Modal styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            z-index: 1000; /* Sit on top of other content */
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.5); /* Black background with opacity */
+        }
+
+        .modal-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            backdrop-filter: blur(2px); /* Adjust the blur intensity */
+            -webkit-backdrop-filter: blur(2px); /* Safari support */
+            background-color: rgba(0, 0, 0, 0.3); /* Optional dark translucent layer */
+            z-index: 98; /* Ensure it's above all other elements */
+        }
+
+        /* Modal Content */
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto; /* Center vertically */
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 400px;
+            position: relative;
+            border-radius: 10px;
+            z-index: 99;
+        }
+
+        /* Close Button */
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            position: absolute;
+            right: 10px;
+            top: 5px;
+            cursor: pointer;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* Adjust z-index of result-container */
+        #result-container {
+            position: relative;
+            z-index: 1;
+        }
 
     </style>
 </head>
@@ -132,7 +193,11 @@
         
         <form>
             <div class="form-group">
-                <label for="arr">ARR (€)</label>
+                <label for="amount_to_raise">Amount to raise (optional)</label>
+                <input type="text" id="amount_to_raise" name="amount_to_raise" placeholder="-" class="number-input">
+            </div>
+            <div class="form-group">
+                <label for="arr">ARR</label>
                 <input type="text" id="arr" name="arr" placeholder="10,000,000" class="number-input">
             </div>
             <div class="form-group">
@@ -140,11 +205,11 @@
                 <input type="text" id="revenue_growth" name="revenue_growth" placeholder="50%" class="percentage-input">
             </div>
             <div class="form-group">
-                <label for="gross_margin">Gross Margin (%)</label>
+                <label for="gross_margin">Gross Margin</label>
                 <input type="text" id="gross_margin" name="gross_margin" placeholder="70%" class="percentage-input">
             </div>
             <div class="form-group">
-                <label for="cash_burn">Cash Burn (€)</label>
+                <label for="cash_burn">Cash Burn</label>
                 <input type="text" id="cash_burn" name="cash_burn" placeholder="500,000" class="number-input">
             </div>
             <div class="form-group">
@@ -152,16 +217,12 @@
                 <input type="text" id="current_runway" name="current_runway" placeholder="12" class="number-input">
             </div>
             <div class="form-group">
-                <label for="current_valuation">Current Valuation (€)</label>
+                <label for="current_valuation">Current Valuation</label>
                 <input type="text" id="current_valuation" name="current_valuation" placeholder="50,000,000" class="number-input">
             </div>
             <div class="form-group">
-                <label for="current_ownership">Current Ownership (%)</label>
+                <label for="current_ownership">Current Ownership</label>
                 <input type="text" id="current_ownership" name="current_ownership" placeholder="70%" class="percentage-input">
-            </div>
-            <div class="form-group">
-                <label for="current_debt">Current Debt (€)</label>
-                <input type="text" id="current_debt" name="current_debt" placeholder="0" class="number-input">
             </div>
             <!-- <div class="form-group">
                 <label for="klymb_advisory_service">Klymb Advisory Service</label>
@@ -175,8 +236,8 @@
         <div class="warning-container" id="runway-container">
             <p>You do not have 12 months of runway. We recommend you to raise additional equity to qualify venture debt investors' requirement.</p>
         </div>
-        <div class="warning-container" id="debt-container">
-            <p>You already raised a substantial amount of debt. Except if you want to refinance it, we recommend you to raise additional equity instead to qualify venture debt investors in the future.</p>
+        <div class="warning-container" id="debt-exceeded-container">
+            <p>You are trying to raise more than what our model estimates to be achievable based on the information we currently have. Please contact us for a more detailed analysis.</p>
         </div>
         <div class="warning-container" id="arr-container">
             <p>ARR Alert.</p>
@@ -193,7 +254,7 @@
     <div class="result-container" id="result-container">
         <div class="cards-container">
             <div class="card show">
-                <div class="card-title">Amount Raised</div>
+                <div class="card-title">Target Amount</div>
                 <div id="amountRaised" class="card-value"></div>
             </div>
             <div class="card">
@@ -208,6 +269,10 @@
                 <div class="card-title">Preserved Ownership</div>
                 <div id="retainedOwnership" class="card-value"></div>
             </div>
+            <div class="card show">
+                <div class="card-title">Number of Investors</div>
+                <div id="numberInvestors" class="card-value"></div>
+            </div>
             <div class="card">
                 <div class="card-title">After-Tax Cost of Debt</div>
                 <div id="afterTaxCostOfDebt" class="card-value"></div>
@@ -218,12 +283,33 @@
         <div id="chart-container" class="chart-container">
             <div class="chart show" id="debt_radar_chart"></div>
             <div class="chart show" id="cost_comparison_chart"></div>
-            <div class="chart show" id="retained_valuation_gap_chart"></div>
+            <!-- <div class="chart show" id="retained_valuation_gap_chart"></div> -->
             <div class="chart show" id="payment_schedule_chart"></div>
+            <div class="chart show" id="cashflow_evolution_chart"></div>
         </div>
     </div>
 
     <!-- <script src="https://yohanklymb.github.io/venture-debt-simulator-public/js/main.min.js"></script> -->
     <script src="js/main.js"></script>
+
+    <!-- Email Modal -->
+    <div id="email-modal" class="modal">
+        <div class="modal-background"></div>
+        <div class="modal-content">
+            <span id="modal-close-button" class="close">&times;</span>
+            <div class="card show">
+                <div class="card-title">Target Amount</div>
+                <div id="modalTargetAmount" class="card-value"></div>
+            </div>
+            <div class="card show">
+                <div class="card-title">Number of Investors</div>
+                <div id="modalNumberInvestors" class="card-value"></div>
+            </div>
+            <h2>Get Your Full Report</h2>
+            <p>Enter your email to access the detailed analysis.</p>
+            <input type="email" id="email-input" placeholder="Enter your email" required>
+            <button id="email-submit-button">Submit</button>
+        </div>
+    </div>
 </body>
 </html>
