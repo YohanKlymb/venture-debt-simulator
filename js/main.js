@@ -242,7 +242,6 @@ function triggerHighRunwayAlert(newRunway, forceTrigger=false) {
         hideElement('afterTaxCostOfDebt', focusParent=true);
         isHighRunway = true
     } else {
-        console.log('here')
         isNearProfitableCompany = false;
         showElement('additionalRunway', focusParent=true);
         showElement('increasedValuation', focusParent=true);
