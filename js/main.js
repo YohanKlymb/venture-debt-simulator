@@ -235,19 +235,19 @@ function triggerHighRunwayAlert(newRunway, forceTrigger=false) {
     if ((newRunway !== null && newRunway > runwayThreshold) || forceTrigger) {
         isNearProfitableCompany = true;
         hideElement('additionalRunway', focusParent=true);
-        hideElement('increasedValuation', focusParent=true);
+        // hideElement('increasedValuation', focusParent=true);
         hideElement('cost_comparison_chart');
         // hideElement('retained_valuation_gap_chart');
-        hideElement('cashflow_evolution_chart');
+        // hideElement('cashflow_evolution_chart');
         hideElement('afterTaxCostOfDebt', focusParent=true);
         isHighRunway = true
     } else {
         isNearProfitableCompany = false;
         showElement('additionalRunway', focusParent=true);
-        showElement('increasedValuation', focusParent=true);
+        // showElement('increasedValuation', focusParent=true);
         showElement('cost_comparison_chart');
         // showElement('retained_valuation_gap_chart');
-        showElement('cashflow_evolution_chart');
+        // showElement('cashflow_evolution_chart');
         hideElement('afterTaxCostOfDebt', focusParent=true);
     }
 
@@ -839,7 +839,7 @@ function computeGrowingValuation(originalValuation, monthlyGrowthRate, months) {
 
     // Compute the valuation for each month
     let currentValuation = originalValuation;
-    for (let month = 0; month < months; month++) {
+    for (let month = 0; month <= months; month++) {
         valuations.push(currentValuation);
         currentValuation *= (1 + monthlyGrowthRate);
     }
@@ -858,15 +858,17 @@ function simulateNewOwnership(current_valuation, current_ownership, debtAmount) 
     return founderNewOwnership;
 }
 
-function computeEquityValuation(debtTermSheet, valuationsDebt, transitionPeriod=6, includeFundraising=false) {
+function computeEquityValuation(debtTermSheet, valuationsDebt, transitionPeriod=6, includeFundraising=true) {
     const { debtAmount: equityInvestment } = debtTermSheet;    
     const valuationsEquity = [];
+    let initialValuationWeight;
 
     for (let month = 0; month < valuationsDebt.length; month++) {
 
         let valuationEquity;
         if (includeFundraising && month < transitionPeriod) {
-            const initialValuationWeight = (transitionPeriod - month) / transitionPeriod;
+            
+            initialValuationWeight = (transitionPeriod - month) / transitionPeriod;
             valuationEquity = valuationsDebt[month] + initialValuationWeight * equityInvestment;
         } else {
             valuationEquity = valuationsDebt[month];
@@ -901,6 +903,7 @@ function computeValuationMetrics(values, debtTermSheet, transitionPeriod=6) {
     const monthlyGrowthRate = yearlyToMonthlyGrowthRate(revenue_growth);
     const valuationsDebt = computeGrowingValuation(current_valuation, monthlyGrowthRate, newRunway);
     const valuationsEquity = computeEquityValuation(debtTermSheet, valuationsDebt, transitionPeriod);
+
     const retainedValuesDebt = valuationsDebt.map(valuation => valuation * newOwnershipDebt);
     const retainedValuesEquity = valuationsEquity.map(valuation => valuation * newOwnershipEquity);
 
@@ -914,8 +917,8 @@ function computeValuationMetrics(values, debtTermSheet, transitionPeriod=6) {
     };
 }
 
-function computeValuationIncrease(valuations, currentRunnway, newRunway) {
-    return roundToSignificantDigits(valuations[newRunway - 1] - valuations[currentRunnway - 1], 4)
+function computeValuationIncreaseFromAdditionalRunway(valuations, currentRunway, newRunway) {
+    return roundToSignificantDigits(valuations[newRunway] - valuations[currentRunway], 4)
 }
 
 function formatToPercentage(value, nbDecimal=2) {
@@ -924,8 +927,17 @@ function formatToPercentage(value, nbDecimal=2) {
     return (value * 100).toFixed(nbDecimal) + '%';
 }
 
-function formatToCurrency(value, nbDecimal=0) {
+function formatToCurrency(value, nbDecimal=0, reduce=false) {
     // Use toLocaleString to format the number with commas separating thousands
+
+    if (reduce) {
+        if (value >= 1e6) {
+            return (value / 1e6).toLocaleString('en-US', { maximumFractionDigits: nbDecimal }) + 'm'; // Millions
+        } else if (value >= 1e3) {
+            return (value / 1e3).toLocaleString('en-US', { maximumFractionDigits: nbDecimal }) + 'k'; // Thousands
+        }
+    }
+
     return value.toLocaleString('en-US', { maximumFractionDigits: nbDecimal });
 }
 
@@ -1099,6 +1111,7 @@ function chartCostComparison(totalPaid, remainingBalance, retainedValuesDebt, re
 
     // Plot the chart
     renderOrUpdatePlot('cost_comparison_chart', data, layout, onlyRender=true);
+    
 }
 
 function chartRetainedValue(retainedValuesDebt, retainedValuesEquity, currentRunway) {
@@ -1555,7 +1568,6 @@ function chartCashFlowsEvolution(values, debtTermSheet) {
     renderOrUpdatePlot('cashflow_evolution_chart', data, layout);
 }
 
-
 function showElement(elementId, focusParent = false) {
     const element = document.getElementById(elementId);
     
@@ -1602,10 +1614,12 @@ function updateCharts(values, debtTermSheetHigh, debtTermSheetLow) {
         retainedValuesEquity
     } = computeValuationMetrics(values, debtTermSheetHigh, 6);
 
+    const retainedOwnership = formatToPercentage(newOwnershipDebt - newOwnershipEquity);
+
     // Update elements applicable to all scenarios
     // Update cards value
     document.getElementById('amountRaised').textContent = formatToCurrency(debtAmount);
-    document.getElementById('retainedOwnership').textContent = formatToPercentage(newOwnershipDebt - newOwnershipEquity);
+    document.getElementById('retainedOwnership').textContent = retainedOwnership
     document.getElementById('numberInvestors').textContent = numberOfInvestors;
 
     // Update modal cards value
@@ -1620,12 +1634,22 @@ function updateCharts(values, debtTermSheetHigh, debtTermSheetLow) {
     if (!isNearProfitableCompany) {
         // Update cards value
         document.getElementById('additionalRunway').textContent = Math.round(newRunway - current_runway) + " months";
-        document.getElementById('increasedValuation').textContent = formatToCurrency(computeValuationIncrease(valuationsDebt, current_runway, newRunway));
+        // document.getElementById('increasedValuation').textContent = formatToCurrency(computeValuationIncreaseFromAdditionalRunway(valuationsDebt, current_runway, newRunway));
 
         // Update charts
         chartCostComparison(totalPaid, remainingBalance, retainedValuesDebt, retainedValuesEquity);
         // chartRetainedValue(retainedValuesDebt, retainedValuesEquity, current_runway);
-        chartCashFlowsEvolution(values, debtTermSheetHigh);
+        // chartCashFlowsEvolution(values, debtTermSheetHigh);
+
+        //// Adjust the text associated with the cost comparison chart
+        // Get the last valuation in the array and format with 'k' for thousands, 'm' for millions
+        const lastValuation = valuationsDebt[valuationsDebt.length - 1];
+        const formattedValuation = formatToCurrency(lastValuation, nbDecimal=0, reduce=true);
+
+        // Update the spans in the HTML
+        document.getElementById('retained-ownership-span').textContent = retainedOwnership;
+        document.getElementById('valuation-span').textContent = formattedValuation;
+        document.getElementById('runway-span').textContent = newRunway + " months";
     }
 
     if (isProfitableCompany) {
