@@ -1084,7 +1084,7 @@ function chartCostComparison(totalPaid, remainingBalance, retainedValuesDebt, re
     // Layout for the bar chart
     const layout = {
         barmode: 'stack',
-        title: 'Debt vs Equity financing cost',
+        // title: 'Debt vs Equity financing cost',
         showlegend: false,  // Hide legend
         xaxis: {
             showgrid: false,  // Hide x-axis grid lines
@@ -1253,7 +1253,7 @@ function chartYearlyPayments(schedule, isTaxDeductible=false) {
     const layout = {
         // width: 400,
         // height: 240,
-        title: 'Yearly loan amortization forecast',
+        // title: 'Yearly loan amortization forecast',
         barmode: 'relative',
         xaxis: { fixedrange: true },
         yaxis: { title: 'Amount (€)', fixedrange: true },
