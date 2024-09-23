@@ -236,8 +236,8 @@ function triggerHighRunwayAlert(newRunway, forceTrigger=false) {
         isNearProfitableCompany = true;
         hideElement('additionalRunway', focusParent=true);
         // hideElement('increasedValuation', focusParent=true);
-        hideElement('cost_comparison_chart');
-        // hideElement('retained_valuation_gap_chart');
+        hideElement('cost_comparison_chart_container');
+        hideElement('retained_valuation_gap_chart_container');
         // hideElement('cashflow_evolution_chart');
         hideElement('afterTaxCostOfDebt', focusParent=true);
         isHighRunway = true
@@ -245,8 +245,8 @@ function triggerHighRunwayAlert(newRunway, forceTrigger=false) {
         isNearProfitableCompany = false;
         showElement('additionalRunway', focusParent=true);
         // showElement('increasedValuation', focusParent=true);
-        showElement('cost_comparison_chart');
-        // showElement('retained_valuation_gap_chart');
+        showElement('cost_comparison_chart_container');
+        showElement('retained_valuation_gap_chart_container');
         // showElement('cashflow_evolution_chart');
         hideElement('afterTaxCostOfDebt', focusParent=true);
     }
@@ -858,7 +858,7 @@ function simulateNewOwnership(current_valuation, current_ownership, debtAmount) 
     return founderNewOwnership;
 }
 
-function computeEquityValuation(debtTermSheet, valuationsDebt, transitionPeriod=6, includeFundraising=true) {
+function computeEquityValuation(debtTermSheet, valuationsDebt, transitionPeriod=6, includeFundraising=false) {
     const { debtAmount: equityInvestment } = debtTermSheet;    
     const valuationsEquity = [];
     let initialValuationWeight;
@@ -1176,7 +1176,7 @@ function chartRetainedValue(retainedValuesDebt, retainedValuesEquity, currentRun
 
     // Layout for the line chart
     const layout = {
-        title: 'Retained Values Over Time',
+        // title: 'Retained Values Over Time',
         showlegend: false,  // Hide legend
         xaxis: {
             fixedrange: true,
@@ -1638,7 +1638,7 @@ function updateCharts(values, debtTermSheetHigh, debtTermSheetLow) {
 
         // Update charts
         chartCostComparison(totalPaid, remainingBalance, retainedValuesDebt, retainedValuesEquity);
-        // chartRetainedValue(retainedValuesDebt, retainedValuesEquity, current_runway);
+        chartRetainedValue(retainedValuesDebt, retainedValuesEquity, current_runway);
         // chartCashFlowsEvolution(values, debtTermSheetHigh);
 
         //// Adjust the text associated with the cost comparison chart

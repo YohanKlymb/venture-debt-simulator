@@ -17,7 +17,8 @@
         }
         .result-container.show {
             opacity: 1;
-            max-height: 1000px; /* Adjust to a large enough value to accommodate your content */
+            box-sizing: content-box;
+            min-height: 2500px; /* Adjust to a large enough value to accommodate your content */
             transform: translateY(0); /* Move back to original position */
         }
         .warning-container {
@@ -75,10 +76,10 @@
             flex-wrap: wrap;
             justify-content: space-around;
             max-width: 100%;
+            box-sizing: content-box;
         }
         .chart {
-            width: 45%;
-            min-width: 300px;
+            width: 100%;
             box-sizing: content-box;
             border: 1px solid #ddd;
             border-radius: 10px;
@@ -88,11 +89,21 @@
             padding-top: 0;
             padding-bottom: 0;
             box-shadow: 1px 3px 8px rgba(0,0,0,0.1);
-            display: none;
-        }
-        .chart.show {
             display: block;
         }
+        .chart-section {
+            width: 60%;
+            min-width: 300px;
+            flex: 0 auto;
+            padding-top: 0;
+            padding-bottom: 0;
+            display: none;
+        }
+        .chart-section.show {
+            display: block;
+        }
+
+
 
         /* Pictogram styling */
         .tooltip-icon {
@@ -281,17 +292,23 @@
     
         <h2>Financial Overview Chart</h2>
         <div id="chart-container" class="chart-container">
-            <div class="chart show" id="cost_comparison_chart"></div>
-            <p>The cost of dilution is based on the retained ownership of <span id="retained-ownership-span"></span> and the new valuation of <span id="valuation-span"></span> at the end of the new runway of <span id="runway-span"></span>.</p>
-            <div class="chart show" id="debt_radar_chart"></div>
-            <!-- <div class="chart show" id="retained_valuation_gap_chart"></div> -->
-            <div class="chart show" id="payment_schedule_chart"></div>
+            <div class="chart-section show" id="cost_comparison_chart_container">
+                <div class="chart" id="cost_comparison_chart"></div>
+                <p>The cost of dilution is based on the retained ownership of <span id="retained-ownership-span"></span> and the new valuation of <span id="valuation-span"></span> at the end of the new runway of <span id="runway-span"></span>.</p>
+            </div>
+            <div class="chart-section show" id="retained_valuation_gap_chart_container">
+                <div class="chart" id="retained_valuation_gap_chart"></div>
+            </div>
+            <div class="chart-section show" id="debt_radar_chart_container">
+                <div class="chart" id="debt_radar_chart"></div>
+            </div>
+            <div class="chart-section show" id="payment_schedule_chart_container">
+                <div class="chart" id="payment_schedule_chart"></div>
+            </div>
+        
             <!-- <div class="chart show" id="cashflow_evolution_chart"></div> -->
         </div>
     </div>
-
-    <!-- <script src="https://yohanklymb.github.io/venture-debt-simulator-public/js/main.min.js"></script> -->
-    <script src="js/main.js"></script>
 
     <!-- Email Modal -->
     <div id="email-modal" class="modal">
@@ -312,5 +329,8 @@
             <button id="email-submit-button">Submit</button>
         </div>
     </div>
+
+    <!-- <script src="https://yohanklymb.github.io/venture-debt-simulator-public/js/main.min.js"></script> -->
+    <script src="js/main.js"></script>
 </body>
 </html>
