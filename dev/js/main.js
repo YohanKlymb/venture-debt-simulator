@@ -273,7 +273,6 @@ function triggerLowARRAlert(arr, cash_burn) {
     if (arr < arrThreshold || arr < cash_burn*6) {
         showElement('arr-container');
         hideElement('growth-container');
-        hideElement('near-profitability-container');
         arrInput.classList.add('input-error');
         return true;
     }
@@ -541,6 +540,7 @@ function createDebtTermSheet(values, boosterCoef=null) {
     let debtAmount = debtAmountComputed;
     let amountToRaiseExceeded = false;
 
+    console.log(values)
     if (amount_to_raise) {
         if (amount_to_raise <= debtAmountComputed) {
             debtAmount = amount_to_raise;
