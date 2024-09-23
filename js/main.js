@@ -273,7 +273,6 @@ function triggerLowARRAlert(arr, cash_burn) {
     if (arr < arrThreshold || arr < cash_burn*6) {
         showElement('arr-container');
         hideElement('growth-container');
-        hideElement('near-profitability-container');
         arrInput.classList.add('input-error');
         return true;
     }
