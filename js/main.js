@@ -258,17 +258,11 @@ function triggerHighRunwayAlert(newRunway, forceTrigger=false) {
         hideElement('afterTaxCostOfDebt', focusParent=true);
     }
 
-    if (isGrowthCompany) {
+    if (isGrowthCompany || isNearProfitableCompany || isProfitableCompany) {
         showElement('growth-container');
         isHighRunway = true
     } else {
         hideElement('growth-container');
-    }
-
-    if ((isNearProfitableCompany || isProfitableCompany) && !isGrowthCompany) {
-        showElement('near-profitability-container');
-    } else {
-        hideElement('near-profitability-container');
     }
 
     return isHighRunway
@@ -1823,6 +1817,13 @@ emailSubmitButton.addEventListener('click', function() {
     } else {
         emailInput.classList.add('input-error');
     }
+});
+
+// Add another modal trigger when link is clicked
+const openModalLink = document.getElementById('open-modal-link');
+openModalLink.addEventListener('click', function(event) {
+    event.preventDefault(); // Prevent default anchor behavior
+    showEmailModal(); // Open the modal
 });
 
 // Function to validate email format
