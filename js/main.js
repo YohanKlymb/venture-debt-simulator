@@ -1099,7 +1099,7 @@ function chartCostComparison(totalPaid, remainingBalance, retainedValuesDebt, re
         hovermode: 'closest',
         plot_bgcolor: 'rgba(0,0,0,0)',  // Transparent plot background
         paper_bgcolor: 'rgba(0,0,0,0)',  // Transparent paper background
-        bargap: 0.2,
+        bargap: 0.5,
         bargroupgap: 0.1
     };
 
@@ -1249,6 +1249,7 @@ function chartYearlyPayments(schedule, isTaxDeductible=false) {
         // height: 240,
         // title: 'Yearly loan amortization forecast',
         barmode: 'relative',
+        bargap: 0.5,
         xaxis: { fixedrange: true },
         yaxis: { title: 'Amount (€)', fixedrange: true },
         showlegend: false,
@@ -1642,7 +1643,7 @@ function updateCharts(values, debtTermSheetHigh, debtTermSheetLow) {
 
         // Update the spans in the HTML
         document.getElementById('retained-ownership-span').textContent = retainedOwnership;
-        document.getElementById('valuation-span').textContent = formattedValuation;
+        document.getElementById('valuation-span').textContent = '€' + formattedValuation;
         document.getElementById('runway-span').textContent = newRunway + " months";
     }
 
