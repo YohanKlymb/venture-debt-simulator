@@ -160,9 +160,21 @@ function captureValues() {
         throw new Error('Input error.');
     }
 
+    // Check if no cash burn
+    if (values["cash_burn"] === '' || values["cash_burn"] === null || values["cash_burn"] === undefined || values["cash_burn"] > 0) {
+        isProfitableCompany = false;
+    } else {
+        isProfitableCompany = true;
+    }
+
     // Check required fields for empty values
     for (const input of inputs) {
         if (requiredFields.includes(input.name)) {
+            // No need to check for the runway if the company is not burning cash
+            if (isProfitableCompany && input.name === "current_runway") {
+                values["current_runway"] = 0;
+                break;
+            }
             if (input.value === '' || input.value === null || input.value === undefined) {
                 hasError = true; // Raise error for empty required field
                 break; // Exit the loop once an empty required field is found
@@ -174,6 +186,16 @@ function captureValues() {
         throw new Error('Input missing.')
     }
 
+    const rescaledValues = rescaleValues(values);
+
+    return rescaledValues;
+}
+
+function rescaleValues(values) {
+    // For values that are not in the proper scale, apply a rescaling
+    values.cash_burn *= 1000 // thousands
+    values.arr *= 1000000 // millions
+    values.current_valuation *= 1000000 // millions
     return values;
 }
 
@@ -238,6 +260,7 @@ function triggerHighRunwayAlert(newRunway, forceTrigger=false) {
         // hideElement('increasedValuation', focusParent=true);
         hideElement('cost_comparison_chart_container');
         hideElement('retained_valuation_gap_chart_container');
+        hideElement('title-debt-vs-equity');
         // hideElement('cashflow_evolution_chart');
         hideElement('afterTaxCostOfDebt', focusParent=true);
         isHighRunway = true
@@ -247,6 +270,7 @@ function triggerHighRunwayAlert(newRunway, forceTrigger=false) {
         // showElement('increasedValuation', focusParent=true);
         showElement('cost_comparison_chart_container');
         showElement('retained_valuation_gap_chart_container');
+        showElement('title-debt-vs-equity');
         // showElement('cashflow_evolution_chart');
         hideElement('afterTaxCostOfDebt', focusParent=true);
     }
@@ -1278,6 +1302,11 @@ function chartDebtRatingRadar(debtTermSheetHigh, debtTermSheetLow) {
         }
     }
 
+    // Based on conversations with Nicolas from Atempo
+    if (debtTermSheetHigh.warrantCoverage > 0.1) {
+        debtTermSheetHigh.warrantCoverage = 0.1;
+    }
+
     // Styler function for labels
     const styler = (x) => `<br><span style='color:#8434B4; font-size:9; font-style: italic;'>${x}</span>`;
 
@@ -1317,12 +1346,12 @@ function chartDebtRatingRadar(debtTermSheetHigh, debtTermSheetLow) {
             '%',
             true
         ))}`,
-        `Warrant discount${styler(formatParameterRange(
-            debtTermSheetLow.warrantDiscount,
-            debtTermSheetHigh.warrantDiscount,
-            '%',
-            true
-        ))}`,
+        // `Warrant discount${styler(formatParameterRange(
+        //     debtTermSheetLow.warrantDiscount,
+        //     debtTermSheetHigh.warrantDiscount,
+        //     '%',
+        //     true
+        // ))}`,
         `Interest-only${styler(formatParameterRange(
             debtTermSheetLow.interestOnlyPeriod,
             debtTermSheetHigh.interestOnlyPeriod,
@@ -1336,8 +1365,8 @@ function chartDebtRatingRadar(debtTermSheetHigh, debtTermSheetLow) {
         sigmoidAdjusted(debtTermSheetHigh.interestRate, 0.17, 0.09, 0.14, 10),
         sigmoidAdjusted(debtTermSheetHigh.arrangementFees, 0.04, 0, 0.02, 10),
         sigmoidAdjusted(debtTermSheetHigh.exitFees, 0.04, 0, 0.02, 10),
-        sigmoidAdjusted(debtTermSheetHigh.warrantCoverage, 0.3, 0, 0.1, 6),
-        sigmoidAdjusted(debtTermSheetHigh.warrantDiscount, 0.3, 0, 0.1, 6),
+        sigmoidAdjusted(debtTermSheetHigh.warrantCoverage, 0.2, 0, 0.12, 6),
+        // sigmoidAdjusted(debtTermSheetHigh.warrantDiscount, 0.3, 0, 0.1, 6),
         sigmoidAdjusted(debtTermSheetHigh.interestOnlyPeriod, 0, 24, 12, 10),
     ];
 
@@ -1347,8 +1376,8 @@ function chartDebtRatingRadar(debtTermSheetHigh, debtTermSheetLow) {
         sigmoidAdjusted(debtTermSheetLow.interestRate, 0.17, 0.09, 0.14, 10),
         sigmoidAdjusted(debtTermSheetLow.arrangementFees, 0.04, 0, 0.02, 10),
         sigmoidAdjusted(debtTermSheetLow.exitFees, 0.04, 0, 0.02, 10),
-        sigmoidAdjusted(debtTermSheetLow.warrantCoverage, 0.3, 0, 0.1, 6),
-        sigmoidAdjusted(debtTermSheetLow.warrantDiscount, 0.3, 0, 0.1, 6),
+        sigmoidAdjusted(debtTermSheetLow.warrantCoverage, 0.2, 0, 0.12, 6),
+        // sigmoidAdjusted(debtTermSheetLow.warrantDiscount, 0.3, 0, 0.1, 6),
         sigmoidAdjusted(debtTermSheetLow.interestOnlyPeriod, 0, 24, 12, 10),
     ];
 
@@ -1614,11 +1643,11 @@ function updateCharts(values, debtTermSheetHigh, debtTermSheetLow) {
     // Update cards value
     document.getElementById('amountRaised').textContent = formatToCurrency(debtAmount);
     document.getElementById('retainedOwnership').textContent = retainedOwnership
-    document.getElementById('numberInvestors').textContent = numberOfInvestors;
+    document.getElementById('number-investors-span').textContent = numberOfInvestors;
 
-    // Update modal cards value
+    // Update modal values
     document.getElementById('modalTargetAmount').textContent = formatToCurrency(debtAmount);
-    document.getElementById('modalNumberInvestors').textContent = numberOfInvestors;
+    document.getElementById('number-investors-modal-span').textContent = numberOfInvestors;
 
     // Update charts
     chartDebtRatingRadar(debtTermSheetHigh, debtTermSheetLow);
