@@ -192,6 +192,13 @@
             z-index: 1;
         }
 
+        .chart-section-title {
+            display: none;
+        }
+        .chart-section-title.show {
+            display: block;
+        }
+
     </style>
 </head>
 <body>
@@ -209,7 +216,7 @@
             </div>
             <div class="form-group">
                 <label for="arr">ARR</label>
-                <input type="text" id="arr" name="arr" placeholder="10,000,000" class="number-input">
+                <input type="text" id="arr" name="arr" placeholder="e.g., 10 for 10,000,000" class="number-input">
             </div>
             <div class="form-group">
                 <label for="revenue_growth">Revenue Growth (% yearly)</label>
@@ -221,7 +228,7 @@
             </div>
             <div class="form-group">
                 <label for="cash_burn">Cash Burn</label>
-                <input type="text" id="cash_burn" name="cash_burn" placeholder="500,000" class="number-input">
+                <input type="text" id="cash_burn" name="cash_burn" placeholder="e.g., 500 for 500,000" class="number-input">
             </div>
             <div class="form-group">
                 <label for="current_runway">Current Runway (months)</label>
@@ -229,7 +236,7 @@
             </div>
             <div class="form-group">
                 <label for="current_valuation">Current Valuation</label>
-                <input type="text" id="current_valuation" name="current_valuation" placeholder="50,000,000" class="number-input">
+                <input type="text" id="current_valuation" name="current_valuation" placeholder="e.g., 50 for 50,000,000" class="number-input">
             </div>
             <div class="form-group">
                 <label for="current_ownership">Current Ownership</label>
@@ -260,7 +267,9 @@
     </div>
 
     <div class="result-container" id="result-container">
+
         <div class="cards-container">
+            <p>We have <span id="number-investors-span">___</span> investors in our network matching your profile.</p>
             <div class="card show">
                 <div class="card-title">Target Amount</div>
                 <div id="amountRaised" class="card-value"></div>
@@ -277,10 +286,6 @@
                 <div class="card-title">Preserved Ownership</div>
                 <div id="retainedOwnership" class="card-value"></div>
             </div>
-            <div class="card show">
-                <div class="card-title">Number of Investors</div>
-                <div id="numberInvestors" class="card-value"></div>
-            </div>
             <div class="card">
                 <div class="card-title">After-Tax Cost of Debt</div>
                 <div id="afterTaxCostOfDebt" class="card-value"></div>
@@ -289,6 +294,7 @@
     
         <h2>Financial Overview Chart</h2>
         <div id="chart-container" class="chart-container">
+            <h3 class="chart-section-title" id="title-debt-vs-equity">Debt vs Equity Comparison</h3>
             <div class="chart-section show" id="cost_comparison_chart_container">
                 <div class="chart" id="cost_comparison_chart"></div>
                 <p>The cost of dilution is based on the retained ownership of <span id="retained-ownership-span"></span> and the new valuation of <span id="valuation-span"></span> at the end of the new runway of <span id="runway-span"></span>.</p>
@@ -296,6 +302,7 @@
             <div class="chart-section show" id="retained_valuation_gap_chart_container">
                 <div class="chart" id="retained_valuation_gap_chart"></div>
             </div>
+            <h3 class="chart-section-title show">Your loan conditions and cash impact</h3>
             <div class="chart-section show" id="debt_radar_chart_container">
                 <div class="chart" id="debt_radar_chart"></div>
             </div>
@@ -312,14 +319,7 @@
         <div class="modal-background"></div>
         <div class="modal-content">
             <span id="modal-close-button" class="close">&times;</span>
-            <div class="card show">
-                <div class="card-title">Target Amount</div>
-                <div id="modalTargetAmount" class="card-value"></div>
-            </div>
-            <div class="card show">
-                <div class="card-title">Number of Investors</div>
-                <div id="modalNumberInvestors" class="card-value"></div>
-            </div>
+            <p>With our network of <span id="number-investors-modal-span">___</span> investors matching your profile, raise up to <span id="amount-modal-span">___</span>.</p>
             <h2>Get Your Full Report</h2>
             <p>Enter your email to access the detailed analysis.</p>
             <input type="email" id="email-input" placeholder="Enter your email" required>
