@@ -1638,15 +1638,16 @@ function updateCharts(values, debtTermSheetHigh, debtTermSheetLow) {
     } = computeValuationMetrics(values, debtTermSheetHigh, 6);
 
     const retainedOwnership = formatToPercentage(newOwnershipDebt - newOwnershipEquity);
+    const formatedDebtAmount = formatToCurrency(debtAmount, nbDecimal=0, reduce=true);
 
     // Update elements applicable to all scenarios
     // Update cards value
-    document.getElementById('amountRaised').textContent = formatToCurrency(debtAmount);
+    document.getElementById('amountRaised').textContent = "€" + formatedDebtAmount;
     document.getElementById('retainedOwnership').textContent = retainedOwnership
     document.getElementById('number-investors-span').textContent = numberOfInvestors;
 
     // Update modal values
-    document.getElementById('modalTargetAmount').textContent = formatToCurrency(debtAmount);
+    document.getElementById('amount-modal-span').textContent = "€" + formatedDebtAmount;
     document.getElementById('number-investors-modal-span').textContent = numberOfInvestors;
 
     // Update charts
