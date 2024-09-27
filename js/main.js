@@ -212,6 +212,9 @@ function getInputOptions(input) {
 function handleInputBlur(event, options = {}) {
     const input = event.target;
 
+    // Allow to remove the input-error without waiting for a re-submit
+    isInputValid(input);
+
     // Get options based on input attributes if not provided
     if (Object.keys(options).length === 0) {
         options = getInputOptions(input);
@@ -1953,10 +1956,11 @@ inputs.forEach(input => {
     });
 });
 
-// Add event listener to the form's submit event
-const debtForm = document.getElementById('Business-Form');
-debtForm.addEventListener('submit', function(event) {
-    event.preventDefault(); // Prevent the default form submission behavior
+// Add event listener to the form's submit button event
+const submitButton = document.getElementById('submit-button')
+submitButton.addEventListener('click', function() {
+    console.log('hello')
+    isEditing = false;
     updateResults();
 });
 
