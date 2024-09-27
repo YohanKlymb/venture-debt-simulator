@@ -1822,7 +1822,7 @@ function updateCharts(values, debtTermSheetHigh, debtTermSheetLow) {
 
     const retainedOwnership = formatToPercentage(newOwnershipDebt - newOwnershipEquity);
     const formatedDebtAmount = formatToCurrency(debtAmount, nbDecimal=2, reduce=true);
-    console.log(debtAmount, formatedDebtAmount)
+    
     // Update elements applicable to all scenarios
     // Update cards value
     document.getElementById('amountRaised').textContent = "€" + formatedDebtAmount;
@@ -1959,7 +1959,6 @@ inputs.forEach(input => {
 // Add event listener to the form's submit button event
 const submitButton = document.getElementById('submit-button')
 submitButton.addEventListener('click', function() {
-    console.log('hello')
     isEditing = false;
     updateResults();
 });
