@@ -59,38 +59,235 @@ const investorsList = [
     { investorId: 46, minAmount: 500000000, maxAmount: 4000000 }
 ];
 
+function parseNumericInput(inputValue, options = {}) {
+    // Options: allowNegative, isPercentage, suffix ('k', 'm', or null)
+    let value = inputValue.trim();
 
-// Function to format the input value as currency
-function formatCurrencyInputOnBlur(event) {
-    const input = event.target;
-    const value = parseFloat(input.value.replace(/,/g, ''));
-    if (!isNaN(value) && input.value !== '') {
-        input.value = value.toLocaleString('en-US', { maximumFractionDigits: 0 });
+    // Return null if the input is empty
+    if (value === '' || value === null || value === undefined) {
+        return null;
+    }
+
+    const { allowNegative = false, isPercentage = false, suffix = null } = options;
+
+    // Remove commas and spaces
+    value = value.replace(/,/g, '').replace(/\s+/g, '');
+
+    // Remove suffix if present
+    if (suffix && value.toLowerCase().endsWith(suffix)) {
+        value = value.slice(0, -suffix.length);
+    }
+
+    // Remove percentage sign if present
+    if (isPercentage) {
+        value = value.replace('%', '');
+    }
+
+    // Allow negative sign if specified
+    const regex = allowNegative ? /^-?\d*\.?\d*$/ : /^\d*\.?\d*$/;
+    if (!regex.test(value)) {
+        return NaN;
+    }
+
+    // Parse the numeric value
+    let numericValue = parseFloat(value);
+    if (isNaN(numericValue)) {
+        return NaN;
+    }
+
+    // Apply suffix multiplier
+    if (suffix === 'k') {
+        numericValue *= 1e3;
+    } else if (suffix === 'm') {
+        numericValue *= 1e6;
+    }
+
+    // Convert percentage to decimal
+    if (isPercentage) {
+        numericValue /= 100;
+    }
+
+    return numericValue;
+}
+
+
+function formatNumericInput(value, options = {}) {
+    // Options: suffix ('k', 'm', or null), decimalPlaces, isPercentage
+    const { suffix = null, decimalPlaces = 2, isPercentage = false } = options;
+
+    if (isNaN(value) || value === null) {
+        return '';
+    }
+
+    let formattedValue = value;
+
+    // Rescale if percentage
+    if (isPercentage) {
+        formattedValue *= 100
+    }
+
+    // Apply suffix divider
+    if (suffix === 'k') {
+        formattedValue /= 1e3;
+    } else if (suffix === 'm') {
+        formattedValue /= 1e6;
+    }
+
+    formattedValue = formattedValue.toLocaleString('en-US', { maximumFractionDigits: decimalPlaces });
+
+    if (suffix) {
+        formattedValue += suffix;
+    }
+
+    // Append percentage sign if needed
+    if (isPercentage) {
+        formattedValue += '%';
+    }
+
+    return formattedValue;
+}
+
+
+function adjustCursorPosition(input, options) {
+    let cursorPosition = input.selectionStart;
+
+    // Check if there is a suffix (either suffix is defined or isPercentage is true)
+    const hasSuffix = options.suffix || options.isPercentage;
+    const suffixLength = hasSuffix ? 1 : 0;
+
+    // Calculate the maximum allowed cursor position
+    const maxPosition = input.value.length - suffixLength;
+
+    // Ensure cursor doesn't go beyond the input value minus the suffix
+    if (cursorPosition > maxPosition) {
+        cursorPosition = maxPosition;
+        input.setSelectionRange(cursorPosition, cursorPosition);
     }
 }
 
-function handleCurrencyInputChange(event) {
-    const input = event.target;
-    const cursorPosition = input.selectionStart;
-    
-    // Get the value without commas
-    const rawValue = input.value.replace(/,/g, '');
-    
-    // Insert the comma at the cursor position if needed
-    // const valueWithCommas = parseFloat(rawValue).toLocaleString('en-US', { maximumFractionDigits: 0 });
-    
-    // Set the formatted value
-    input.value = rawValue;
+function attachInputListeners(selector, options = {}) {
+    const inputs = document.querySelectorAll(selector);
 
-    // Restore the cursor position
-    input.setSelectionRange(cursorPosition, cursorPosition);
+    inputs.forEach(input => {
+        input.addEventListener('input', function(event) {
+            handleInputChange(event, options);
+            handleInputFocus(event, options);
+        });
+        input.addEventListener('click', function(event) {
+            handleInputFocus(event, options)
+        });
+        input.addEventListener('keydown', function(event) {
+            handleInputFocus(event, options)
+        });
+        input.addEventListener('focus', function(event) {
+            handleInputFocus(event, options)
+        });
+        input.addEventListener('blur', function(event) {
+            handleInputBlur(event, options);
+        });
+    });
 }
 
-// Function to remove commas on focus
-function removeCommasOnFocus(event) {
+function getInputOptions(input) {
+    const options = {};
+
+    if (input.classList.contains('input-k')) {
+        options.suffix = 'k';
+    } else if (input.classList.contains('input-m')) {
+        options.suffix = 'm';
+    }
+
+    if (input.classList.contains('percentage-input')) {
+        options.isPercentage = true;
+    }
+
+    if (input.id === 'cash_burn') {
+        options.allowNegative = true;
+    } else {
+        options.allowNegative = false;
+    }
+
+    return options;
+}
+
+function handleInputBlur(event, options = {}) {
     const input = event.target;
+
+    // Get options based on input attributes if not provided
+    if (Object.keys(options).length === 0) {
+        options = getInputOptions(input);
+    }
+
+    // Parse the input value
+    let numericValue = parseNumericInput(input.value, options);
+
+    // Format the input value
+    const formattedValue = formatNumericInput(numericValue, options);
+
+    input.value = formattedValue;
+}
+
+function handleInputChange(event, options = {}) {
+    const input = event.target;
+    let cursorPosition = input.selectionStart;
+
+    // Get options based on input attributes if not provided
+    if (Object.keys(options).length === 0) {
+        options = getInputOptions(input);
+    }
+
+    // Remove invalid characters
+    let value = input.value;
+
+    // Remove suffixes and percentage sign for processing
+    if (options.suffix) {
+        value = value.slice(0, -options.suffix.length);
+    }
+
+    if (options.isPercentage && value.endsWith('%')) {
+        value = value.slice(0, -1);
+    }
+
+    if (options.allowNegative) {
+        value = value.replace(/(?!^-)-/g, ''); // Remove extra dashes
+    }
+    value = value.replace(/[^0-9.\-]/g, '');
+
+    // Ensure only one decimal point
+    const parts = value.split('.');
+    if (parts.length > 2) {
+        value = parts[0] + '.' + parts.slice(1).join('');
+    }
+
+    // Set the value back to the input
+    input.value = value;
+
+    // Append suffix or percentage sign if specified
+    if (options.suffix) {
+        input.value += options.suffix;
+    } else if (options.isPercentage) {
+        input.value += '%';
+    }
+
+    // Adjust cursor position to prevent it from moving beyond the suffix
+    adjustCursorPosition(input, cursorPosition, options.suffix ? options.suffix.length : options.isPercentage ? 1 : 0);
+}
+
+
+
+
+function handleInputFocus(event, options = {}) {
+    const input = event.target;
+    // Remove commas
     input.value = input.value.replace(/,/g, '');
+
+    // Adjust cursor position
+    adjustCursorPosition(input, options)
 }
+// function removeCommasOnFocus(event) {
+//     const input = event.target;
+//     input.value = input.value.replace(/,/g, '');
+// }
 
 function validatePercentageInput(event) {
     const input = event.target;
@@ -141,18 +338,15 @@ function captureValues() {
         const isValid = isInputValid(input); // Validate each input
 
         if (!isValid) {
-            hasError = true; // Flag that an error exists
+            hasError = true;
         }
+        const options = getInputOptions(input);
 
-        if (input.classList.contains('number-input')) {
-            values[input.name] = input.value ? parseFloat(input.value.replace(/,/g, '')) || 0 : null;
-        } else if (input.type === 'text' && input.value.includes('%')) {
-            const trimmedValue = input.value.trim();
-            values[input.name] = (trimmedValue === '' || trimmedValue === '%') ? null : parseFloat(trimmedValue) / 100;
-        } else if (input.type === 'select-one' && input.name === 'klymb_advisory_service') {
+        if (input.type === 'select-one' && input.name === 'klymb_advisory_service') {
             values[input.name] = input.value === 'Yes';
         } else {
-            values[input.name] = input.value ? input.value : null;
+            const numericValue = parseNumericInput(input.value, options);
+            values[input.name] = isNaN(numericValue) ? null : numericValue;
         }
     });
 
@@ -161,10 +355,10 @@ function captureValues() {
     }
 
     // Check if no cash burn
-    if (values["cash_burn"] === '' || values["cash_burn"] === null || values["cash_burn"] === undefined || values["cash_burn"] > 0) {
-        isProfitableCompany = false;
-    } else {
+    if (values["cash_burn"] <= 0) {
         isProfitableCompany = true;
+    } else {
+        isProfitableCompany = false;
     }
 
     // Check required fields for empty values
@@ -173,29 +367,19 @@ function captureValues() {
             // No need to check for the runway if the company is not burning cash
             if (isProfitableCompany && input.name === "current_runway") {
                 values["current_runway"] = 0;
-                break;
-            }
-            if (input.value === '' || input.value === null || input.value === undefined) {
+            } else if (input.value === '' || input.value === null || input.value === undefined) {
                 hasError = true; // Raise error for empty required field
+                input.classList.add('input-error');
+                console.log(`Required field "${input.name}" is missing.`);
                 break; // Exit the loop once an empty required field is found
             }
         }
     }
 
     if (hasError) {
-        throw new Error('Input missing.')
+        throw new Error('Input missing.');
     }
 
-    const rescaledValues = rescaleValues(values);
-
-    return rescaledValues;
-}
-
-function rescaleValues(values) {
-    // For values that are not in the proper scale, apply a rescaling
-    values.cash_burn *= 1000 // thousands
-    values.arr *= 1000000 // millions
-    values.current_valuation *= 1000000 // millions
     return values;
 }
 
@@ -204,41 +388,25 @@ function rescaleValues(values) {
 //////////////////
 
 function isInputValid(input) {
-    let value = input.value;
+    const options = getInputOptions(input);
+    const value = input.value;
 
     // Skip validation if the field is empty
-    if (value === '') {
-        input.classList.remove('input-error'); // Ensure the error class is removed if the input is empty
-        return true; // Return true or handle as needed for empty fields
+    if (value.trim() === '') {
+        input.classList.remove('input-error');
+        return true;
     }
 
-    if (input.classList.contains('number-input')) {
-        value = value.replace(/,/g, ''); // Remove commas for number fields
-    } else if (input.classList.contains('percentage-input')) {
-        value = value.replace(/,/g, '').replace('%', ''); // Remove commas and % for percentage fields
+    const numericValue = parseNumericInput(value, options);
+
+    if (isNaN(numericValue)) {
+        input.classList.add('input-error');
+        console.log(`Invalid value in field "${input.name}": ${input.value}`);
+        return false;
     } else {
-        return true; // Input type not handled yet
+        input.classList.remove('input-error');
+        return true;
     }
-
-    // Special handling for cash_burn field to allow negative values
-    if (input.id === 'cash_burn') {
-        if (!/^-?\d*\.?\d+$/.test(value)) { // Allow for negative and decimal numbers
-            input.classList.add('input-error'); // Add error class if invalid
-            console.log(`Invalid value in field "${input.name}": ${input.value}`);
-            return false;
-        }
-    } else {
-        // General check for other fields to allow only positive numbers
-        if (!/^\d*\.?\d+$/.test(value)) { // Allow for decimal numbers
-            input.classList.add('input-error'); // Add the error class to the invalid input field
-            console.log(`Invalid value in field "${input.name}": ${input.value}`);
-            return false;
-        }
-    }
-
-    // If the value is valid, remove any error class
-    input.classList.remove('input-error');
-    return true;
 }
 
 function triggerLowRunwayAlert() {
@@ -408,12 +576,6 @@ function calculateScore(values) {
         cashBurnScore = calculateBurnScore(arr, calculateBurnMultiple(arr, cash_burn, revenue_growth));
     }
     score += cashBurnScore * 20
-    // const ruleOf40 = calculateRuleOf40(arr, revenue_growth, cash_burn);
-    // const ruleOf40Score = ruleOf40ProxyScore(ruleOf40);
-    // console.log('Ruleof40 : ', ruleOf40, ruleOf40Score);
-    // score += Math.min(cashBurnScore, ruleOf40Score) * 20;
-
-
 
     // Normalize score to 0-1 range
     score = Math.max(0, Math.min(1, score / 90));
@@ -1737,22 +1899,17 @@ function updateResults() {
 // Event Listeners
 //////////////////
 
-// Add event listeners to currency inputs for formatting
-const currencyInputs = document.querySelectorAll('.number-input');
-currencyInputs.forEach(input => {
-    input.addEventListener('input', handleCurrencyInputChange);
-    input.addEventListener('blur', formatCurrencyInputOnBlur);
-    input.addEventListener('focus', removeCommasOnFocus);
-});
-// Add event listeners to percentage inputs for validation
-const percentageInputs = document.querySelectorAll('.percentage-input');
-percentageInputs.forEach(input => {
-    input.addEventListener('input', validatePercentageInput);
-    input.addEventListener('blur', validatePercentageInput);
-    input.addEventListener('click', handleCursorMove);
-    input.addEventListener('keydown', handleCursorMove);
-    input.addEventListener('focus', handleCursorMove);
-});
+// Attach listeners for inputs with 'k' suffix
+attachInputListeners('.number-input.input-k', { suffix: 'k' });
+
+// Attach listeners for inputs with 'm' suffix
+attachInputListeners('.number-input.input-m', { suffix: 'm' });
+
+// Attach listeners for percentage inputs
+attachInputListeners('.percentage-input', { isPercentage: true });
+
+// Attach listeners for inputs without suffix
+attachInputListeners('.number-input:not(.input-k):not(.input-m):not(.percentage-input)', {});
 
 // Add event listeners to runway input alert
 const runwayInput = document.getElementById('current_runway');
