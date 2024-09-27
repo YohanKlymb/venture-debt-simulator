@@ -381,6 +381,12 @@ function captureValues() {
 //////////////////
 
 function isInputValid(input) {
+
+    // Pass for that missing unnecessary field
+    if (input.name === "klymb_advisory_service") {
+        return true;
+    }
+
     const options = getInputOptions(input);
     const value = input.value;
 
@@ -1099,19 +1105,40 @@ function formatToPercentage(value, nbDecimal=2) {
     return (value * 100).toFixed(nbDecimal) + '%';
 }
 
-function formatToCurrency(value, nbDecimal=0, reduce=false) {
-    // Use toLocaleString to format the number with commas separating thousands
-
+function formatToCurrency(value, nbDecimal = 0, reduce = false) {
     if (reduce) {
         if (value >= 1e6) {
-            return (value / 1e6).toLocaleString('en-US', { maximumFractionDigits: nbDecimal }) + 'm'; // Millions
+            let reducedValue = value / 1e6;
+            let decimalsToShow = nbDecimal;
+
+            // If the reduced value is a whole number or value is large, show no decimals
+            if (reducedValue >= 10 || reducedValue % 1 === 0) {
+                decimalsToShow = 0;
+            }
+
+            return reducedValue.toLocaleString('en-US', {
+                maximumFractionDigits: decimalsToShow,
+                minimumFractionDigits: decimalsToShow,
+            }) + 'm'; // Millions
         } else if (value >= 1e3) {
-            return (value / 1e3).toLocaleString('en-US', { maximumFractionDigits: nbDecimal }) + 'k'; // Thousands
+            let reducedValue = value / 1e3;
+            let decimalsToShow = nbDecimal;
+
+            // If the reduced value is a whole number, show no decimals
+            if (reducedValue % 1 === 0) {
+                decimalsToShow = 0;
+            }
+
+            return reducedValue.toLocaleString('en-US', {
+                maximumFractionDigits: decimalsToShow,
+                minimumFractionDigits: decimalsToShow,
+            }) + 'k'; // Thousands
         }
     }
 
     return value.toLocaleString('en-US', { maximumFractionDigits: nbDecimal });
 }
+
 
 function computeNumberOfInvestors(targetAmount, cashBurn) {
     let numberOfInvestors = 0;
@@ -1793,8 +1820,8 @@ function updateCharts(values, debtTermSheetHigh, debtTermSheetLow) {
     } = computeValuationMetrics(values, debtTermSheetHigh, 6);
 
     const retainedOwnership = formatToPercentage(newOwnershipDebt - newOwnershipEquity);
-    const formatedDebtAmount = formatToCurrency(debtAmount, nbDecimal=0, reduce=true);
-
+    const formatedDebtAmount = formatToCurrency(debtAmount, nbDecimal=2, reduce=true);
+    console.log(debtAmount, formatedDebtAmount)
     // Update elements applicable to all scenarios
     // Update cards value
     document.getElementById('amountRaised').textContent = "€" + formatedDebtAmount;
