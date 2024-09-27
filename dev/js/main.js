@@ -147,7 +147,6 @@ function formatNumericInput(value, options = {}) {
     return formattedValue;
 }
 
-
 function adjustCursorPosition(input, options) {
     let cursorPosition = input.selectionStart;
 
@@ -348,7 +347,7 @@ function captureValues() {
     }
 
     // Check if no cash burn
-    if (values["cash_burn"] <= 0) {
+    if (values.cash_burn !== null && values.cash_burn <= 0) {
         isProfitableCompany = true;
     } else {
         isProfitableCompany = false;
@@ -364,7 +363,7 @@ function captureValues() {
                 hasError = true; // Raise error for empty required field
                 input.classList.add('input-error');
                 console.log(`Required field "${input.name}" is missing.`);
-                break; // Exit the loop once an empty required field is found
+                // break; // Exit the loop once an empty required field is found
             }
         }
     }
@@ -1138,7 +1137,6 @@ function formatToCurrency(value, nbDecimal = 0, reduce = false) {
 
     return value.toLocaleString('en-US', { maximumFractionDigits: nbDecimal });
 }
-
 
 function computeNumberOfInvestors(targetAmount, cashBurn) {
     let numberOfInvestors = 0;
@@ -1945,7 +1943,7 @@ inputs.forEach(input => {
     // Set isEditing to false after validation is done on blur
     input.addEventListener('blur', (event) => {
         isEditing = false;
-        updateResults()
+        // updateResults()
     });
     input.addEventListener('keydown', (event) => {
         if (event.key === 'Enter') {
@@ -1953,6 +1951,13 @@ inputs.forEach(input => {
             updateResults();
         }
     });
+});
+
+// Add event listener to the form's submit event
+const debtForm = document.getElementById('Business-Form');
+debtForm.addEventListener('submit', function(event) {
+    event.preventDefault(); // Prevent the default form submission behavior
+    updateResults();
 });
 
 //////////////////

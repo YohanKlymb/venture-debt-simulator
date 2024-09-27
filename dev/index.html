@@ -209,7 +209,7 @@
         <h2>Get your debt estimate</h2>
         <p>What value can a standard market debt offer add to your venture?</p>
         
-        <form>
+        <form id="Business-Form">
             <div class="form-group">
                 <label for="amount_to_raise">Amount to raise (optional)</label>
                 <input type="text" id="amount_to_raise" name="amount_to_raise" placeholder="-" class="number-input  input-m">
@@ -242,13 +242,7 @@
                 <label for="current_ownership">Current Ownership</label>
                 <input type="text" id="current_ownership" name="current_ownership" placeholder="70%" class="percentage-input">
             </div>
-            <!-- <div class="form-group">
-                <label for="klymb_advisory_service">Klymb Advisory Service</label>
-                <select id="klymb_advisory_service" name="klymb_advisory_service">
-                    <option value="No" selected>No</option>
-                    <option value="Yes">Yes</option>
-                </select>
-            </div> -->
+            <button type="submit" id="submit-button">Submit</button>
         </form>
 
         <div class="warning-container" id="runway-container">
