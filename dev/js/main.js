@@ -240,7 +240,7 @@ function handleInputChange(event, options = {}) {
     let value = input.value;
 
     // Remove suffixes and percentage sign for processing
-    if (options.suffix) {
+    if (options.suffix && value.endsWith(options.suffix)) {
         value = value.slice(0, -options.suffix.length);
     }
 
@@ -273,9 +273,6 @@ function handleInputChange(event, options = {}) {
     adjustCursorPosition(input, cursorPosition, options.suffix ? options.suffix.length : options.isPercentage ? 1 : 0);
 }
 
-
-
-
 function handleInputFocus(event, options = {}) {
     const input = event.target;
     // Remove commas
@@ -284,10 +281,6 @@ function handleInputFocus(event, options = {}) {
     // Adjust cursor position
     adjustCursorPosition(input, options)
 }
-// function removeCommasOnFocus(event) {
-//     const input = event.target;
-//     input.value = input.value.replace(/,/g, '');
-// }
 
 function validatePercentageInput(event) {
     const input = event.target;
