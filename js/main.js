@@ -147,8 +147,10 @@ function formatNumericInput(value, options = {}) {
     return formattedValue;
 }
 
-function adjustCursorPosition(input, options) {
-    let cursorPosition = input.selectionStart;
+function adjustCursorPosition(input, options, cursorPosition=null) {
+    if (cursorPosition === null) {
+        cursorPosition = input.selectionStart;
+    }
 
     // Check if there is a suffix (either suffix is defined or isPercentage is true)
     const hasSuffix = options.suffix || options.isPercentage;
@@ -157,11 +159,25 @@ function adjustCursorPosition(input, options) {
     // Calculate the maximum allowed cursor position
     const maxPosition = input.value.length - suffixLength;
 
-    // Ensure cursor doesn't go beyond the input value minus the suffix
+    // If the input starts with '-', ensure cursorPosition is at least 1
+    const minPosition = input.value.startsWith('-') ? 1 : 0;
+
+    // Ensure cursor position is within allowed range
     if (cursorPosition > maxPosition) {
         cursorPosition = maxPosition;
-        input.setSelectionRange(cursorPosition, cursorPosition);
+    } else if (cursorPosition < minPosition) {
+        cursorPosition = minPosition;
     }
+
+    // Ensure cursor doesn't go beyond the input value minus the suffix
+    // If the cursor jumps right after the minus sign is added, reset it
+    if (input.value.startsWith('-') && cursorPosition > maxPosition) {
+        cursorPosition = 1; // Position the cursor right after the minus sign
+    } else if (cursorPosition > maxPosition) {
+        cursorPosition = maxPosition;
+    }
+    
+    input.setSelectionRange(cursorPosition, cursorPosition);
 }
 
 function attachInputListeners(selector, options = {}) {
@@ -226,6 +242,12 @@ function handleInputBlur(event, options = {}) {
     // Format the input value
     const formattedValue = formatNumericInput(numericValue, options);
 
+    // Check if parsing was successful
+    if (isNaN(formattedValue) || formattedValue === null) {
+        // Do not change the input value; let the user see what they entered
+        return;
+    }
+
     input.value = formattedValue;
 }
 
@@ -271,8 +293,7 @@ function handleInputChange(event, options = {}) {
         input.value += '%';
     }
 
-    // Adjust cursor position to prevent it from moving beyond the suffix
-    adjustCursorPosition(input, cursorPosition, options.suffix ? options.suffix.length : options.isPercentage ? 1 : 0);
+    adjustCursorPosition(input, options, cursorPosition)
 }
 
 function handleInputFocus(event, options = {}) {
@@ -282,36 +303,6 @@ function handleInputFocus(event, options = {}) {
 
     // Adjust cursor position
     adjustCursorPosition(input, options)
-}
-
-function validatePercentageInput(event) {
-    const input = event.target;
-    let value = input.value.replace('%', '');
-    
-    // Allow only numbers
-    if (!/^\d*\.?\d*$/.test(value)) {
-        value = value.replace(/[^\d.]/g, '');
-    }
-
-    // Ensure percentage sign is present
-    input.value = value + '%';
-
-    // Move cursor to the left of the percentage sign if necessary
-    if (input.selectionStart > input.value.length - 1) {
-        input.setSelectionRange(input.value.length - 1, input.value.length - 1);
-    }
-
-    if (input.value === '%') {
-        input.value = null;
-    }
-}
-
-function handleCursorMove(event) {
-    const input = event.target;
-    // Move cursor to the left of the percentage sign if necessary
-    if (input.selectionStart > input.value.length - 1) {
-        input.setSelectionRange(input.value.length - 1, input.value.length - 1);
-    }
 }
 
 function captureValues() {
@@ -1920,8 +1911,8 @@ function updateResults() {
 // Event Listeners
 //////////////////
 
-// Attach listeners for inputs with 'k' suffix
-attachInputListeners('.number-input.input-k', { suffix: 'k' });
+// Attach listeners for inputs with 'k' suffix and allow negative values
+attachInputListeners('.number-input.input-k', { suffix: 'k', allowNegative: true });
 
 // Attach listeners for inputs with 'm' suffix
 attachInputListeners('.number-input.input-m', { suffix: 'm' });
@@ -1955,6 +1946,20 @@ inputs.forEach(input => {
         }
     });
 });
+
+// Handle cursor position properly
+document.addEventListener('selectionchange', function(event) {
+    const input = document.activeElement;
+    if (input && input.tagName === 'INPUT' && form.contains(input)) {
+        handleSelectionChange(input);
+    }
+});
+
+function handleSelectionChange(input) {
+    // Adjust cursor position if necessary
+    const options = getInputOptions(input);
+    adjustCursorPosition(input, options);
+}
 
 // Add event listener to the form's submit button event
 const submitButton = document.getElementById('submit-button')
