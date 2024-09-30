@@ -198,6 +198,22 @@
         .chart-section-title.show {
             display: block;
         }
+        .cta-container {
+            position: relative;
+            display: flex;
+            flex-wrap: wrap;
+        }
+        .cta-card {
+            width: 200px;
+            height: 120px;
+            background-color: #333;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
 
     </style>
 </head>
@@ -307,6 +323,20 @@
         
             <!-- <div class="chart show" id="cashflow_evolution_chart"></div> -->
         </div>
+
+        <h2>Why do you fundraise?</h2>
+        <div id="cta-container" class="cta-container">
+            <div class="cta-card" id="cta-runway-card">
+                <p>Runway</p>
+            </div>
+            <div class="cta-card" id="cta-international-card">
+                <p>International expansion</p>
+            </div>
+            <div class="cta-card" id="cta-acquisition-card">
+                <p>Strategic M&A</p>
+            </div>
+            <button id="cta-generic">Contact Us</button>
+        </div>
     </div>
 
     <!-- Email Modal -->
@@ -314,9 +344,7 @@
         <div class="modal-background"></div>
         <div class="modal-content">
             <span id="modal-close-button" class="close">&times;</span>
-            <p>With our network of <span id="number-investors-modal-span">___</span> investors matching your profile, raise up to <span id="amount-modal-span">___</span>.</p>
-            <h2>Get Your Full Report</h2>
-            <p>Enter your email to access the detailed analysis.</p>
+            <h2>Get Personnalized Advice on Your <span id="purpose-modal-span">___</span>Financing Strategy</h2>
             <input type="email" id="email-input" placeholder="Enter your email" required>
             <button id="email-submit-button">Submit</button>
         </div>
