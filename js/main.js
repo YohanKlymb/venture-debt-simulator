@@ -243,7 +243,7 @@ function handleInputBlur(event, options = {}) {
     const formattedValue = formatNumericInput(numericValue, options);
 
     // Check if parsing was successful
-    if (isNaN(formattedValue) || formattedValue === null) {
+    if (isNaN(numericValue) || numericValue === null) {
         // Do not change the input value; let the user see what they entered
         return;
     }
