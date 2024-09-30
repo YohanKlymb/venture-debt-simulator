@@ -1830,8 +1830,8 @@ function updateCharts(values, debtTermSheetHigh, debtTermSheetLow) {
     document.getElementById('number-investors-span').textContent = numberOfInvestors;
 
     // Update modal values
-    document.getElementById('amount-modal-span').textContent = "€" + formatedDebtAmount;
-    document.getElementById('number-investors-modal-span').textContent = numberOfInvestors;
+    // document.getElementById('amount-modal-span').textContent = "€" + formatedDebtAmount;
+    // document.getElementById('number-investors-modal-span').textContent = numberOfInvestors;
 
     // Update charts
     chartDebtRatingRadar(debtTermSheetHigh, debtTermSheetLow);
@@ -1973,7 +1973,7 @@ const emailSubmitButton = document.getElementById('email-submit-button');
 const emailInput = document.getElementById('email-input');
 
 // Variable to track if modal has been dismissed
-let modalDismissed = false;
+let modalDismissed = true; // Should be false if you want to show the modal after first result display
 
 // Function to check if email is saved in cookie
 function getEmailFromCookie() {
@@ -1999,6 +1999,11 @@ function setEmailCookie(email) {
 
 // Function to show the modal
 function showEmailModal() {
+    // Blur input element on modal opening to hide keyboard on mobile
+    if (document.activeElement.tagName === 'INPUT') {
+        document.activeElement.blur();
+    }
+
     emailModal.style.display = 'block';
 }
 
@@ -2056,3 +2061,32 @@ updateResults = function() {
         showEmailModal();
     }
 };
+
+// Modify modal span based on event
+let financingPurpose = '';
+const purposeSpan = document.getElementById('purpose-modal-span');
+const ctaRunway = document.getElementById('cta-runway-card');
+const ctaExpansion = document.getElementById('cta-international-card');
+const ctaAcquisition = document.getElementById('cta-acquisition-card');
+const ctaGeneric = document.getElementById('cta-generic');
+purposeSpan.textContent = financingPurpose; // Initialize
+ctaRunway.addEventListener('click', function(event) {
+    event.preventDefault(); // Prevent default link behavior
+    purposeSpan.textContent = "Runway "
+    showEmailModal(); // Open the modal
+});
+ctaExpansion.addEventListener('click', function(event) {
+    event.preventDefault(); // Prevent default link behavior
+    purposeSpan.textContent = "International Expansion "
+    showEmailModal(); // Open the modal
+});
+ctaAcquisition.addEventListener('click', function(event) {
+    event.preventDefault(); // Prevent default link behavior
+    purposeSpan.textContent = "M&A "
+    showEmailModal(); // Open the modal
+});
+ctaGeneric.addEventListener('click', function(event) {
+    event.preventDefault(); // Prevent default link behavior
+    purposeSpan.textContent = ""
+    showEmailModal(); // Open the modal
+});
