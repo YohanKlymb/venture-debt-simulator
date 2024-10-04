@@ -481,7 +481,6 @@ function calculateDebtRange(arr, grossMargin) {
     const refAmount = adjustedARR + adjustedProfit;
     const debtAmountMin = 0.5 * refAmount;
     const debtAmountMax = 1.5 * refAmount;
-    console.log(arr, grossMargin, adjustedARR, adjustedProfit, weight, debtAmountMax, debtAmountMin)
     return { debtAmountMin, debtAmountMax };
 }
 
