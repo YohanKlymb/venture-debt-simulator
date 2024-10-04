@@ -9,6 +9,7 @@ let isGrowthCompany = false;
 const growthThreshold = 2000000 // 2m yearly negative cash burn
 const corporateTaxRate = 0.25 // 25% assumed for European countries
 const arrThreshold = 1000000;
+const grossMarginThreshold = 0.4 // Below 40% you should use the net profit for the debt range
 
 const investorsList = [
     { investorId: 1, minAmount: 5000000, maxAmount: 100000000 },
@@ -470,9 +471,16 @@ function triggerLowARRAlert(arr, cash_burn) {
     return false;
 }
 
-function calculateDebtRange(arr) {
-    const debtAmountMin = 0.5 * arr;
-    const debtAmountMax = 1.5 * arr;
+function calculateDebtRange(arr, grossMargin) {
+    const upperMargin = 0.7;
+    const lowerMargin = 0.1;
+    const midMargin = 0.5;
+    const weight = sigmoidAdjusted(grossMargin, lowerMargin, upperMargin, midMargin);
+    const adjustedARR = arr * weight;
+    const adjustedProfit = arr * grossMargin * (1 - weight);
+    const refAmount = adjustedARR + adjustedProfit;
+    const debtAmountMin = 0.5 * refAmount;
+    const debtAmountMax = 1.5 * refAmount;
     return { debtAmountMin, debtAmountMax };
 }
 
@@ -707,8 +715,8 @@ function addTaxDeduction(schedule) {
 }
 
 function createDebtTermSheet(values, boosterCoef=null) {
-    const { arr, current_runway, klymb_advisory_service, amount_to_raise  } = values;
-    const { debtAmountMin, debtAmountMax } = calculateDebtRange(arr);
+    const { arr, current_runway, klymb_advisory_service, amount_to_raise, gross_margin } = values;
+    const { debtAmountMin, debtAmountMax } = calculateDebtRange(arr, gross_margin);
     const score = calculateScore(values);
     let booster = 0
     if (boosterCoef === null) {
