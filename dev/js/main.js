@@ -228,6 +228,11 @@ function getInputOptions(input) {
 function handleInputBlur(event, options = {}) {
     const input = event.target;
 
+    // Remove the suffix if it is the only character
+    if (input.value === "m" || input.value === "k" || input.value === "%") {
+        input.value = "";
+    }
+
     // Allow to remove the input-error without waiting for a re-submit
     isInputValid(input);
 
