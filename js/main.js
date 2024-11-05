@@ -480,7 +480,8 @@ function calculateDebtRange(arr, grossMargin) {
     const adjustedProfit = arr * grossMargin * (1 - weight);
     const refAmount = adjustedARR + adjustedProfit;
     const debtAmountMin = 0.5 * refAmount;
-    const debtAmountMax = 1.5 * refAmount;
+    const arrScalingFactor = sigmoidAdjusted(arr, 5, 15); // Reduce the higher bound for less mature businesses
+    const debtAmountMax = (1 + 0.5 * arrScalingFactor) * refAmount;
     return { debtAmountMin, debtAmountMax };
 }
 
@@ -776,11 +777,14 @@ function createDebtTermSheet(values, boosterCoef=null) {
     }
 
     // Add event listener to "too large" runway, hence profitable or close to profitability businesses that are probably not suited for venture debt
-    const isVentureCompany = isNearProfitableCompany === false;
-    triggerHighRunwayAlert(debtTermSheet.newRunway - values.current_runway)
-    triggerLowRunwayAlert() // Make sure to call triggerLowRunwayAlert AFTER triggerHighRunwayAlert which changes the state of isNearProfitableCompany
+    // Only if the coefbooster is  null, implying that it is the high bound offer
+    if (boosterCoef === null) {
+        triggerHighRunwayAlert(debtTermSheet.newRunway - values.current_runway)
+        triggerLowRunwayAlert() // Make sure to call triggerLowRunwayAlert AFTER triggerHighRunwayAlert which changes the state of isNearProfitableCompany
+    }
 
     // If the company is eligible to growth debt, but wasn't before 
+    const isVentureCompany = isNearProfitableCompany === false;
     if (isVentureCompany && isNearProfitableCompany) {
         return createDebtTermSheet(values);
     }
